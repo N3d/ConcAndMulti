@@ -52,6 +52,10 @@ public class Node<T extends Comparable<T>> implements Comparable<Node<T>> {
 		this.right=right;
 	}
 	
+	public boolean isLeaf(){
+		return (this.left==null && this.right==null);
+	}
+	
 	@Override
 	public int compareTo(Node<T> o) {
 		return (this.value).compareTo(o.value);
