@@ -148,9 +148,17 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 	}
 
 	public String toString(){
-		return null;
-
+		// it is a debugging method so it doesn't need to lock the structure.
+		Node<T> node=this.root;
+		if(node==null)
+			return "[]";
+		return "["+node.getValue()+recursivePrint(node.left)+recursivePrint(node.right)+"]";
 	}
-
+	
+	private String recursivePrint(Node<T> node){
+		if(node==null)
+			return "";
+		return "["+node.getValue()+recursivePrint(node.left)+recursivePrint(node.right)+"]";
+	}
 
 }

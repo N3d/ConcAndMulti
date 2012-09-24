@@ -7,7 +7,7 @@ import java.util.Random;
 import java.util.concurrent.CyclicBarrier;
 
 import data_structures.implementation.CoarseGrainedList;
-import data_structures.implementation.AppCoarseGrainedTree;
+import data_structures.implementation.CoarseGrainedTree;
 import data_structures.implementation.FineGrainedList;
 import data_structures.implementation.FineGrainedTree;
 import data_structures.implementation.LockFreeList;
@@ -121,7 +121,7 @@ public class Main {
 		if (dataStructure.equals(CGL)) {
 			sorted = new CoarseGrainedList<Integer>();
 		} else if (dataStructure.equals(CGT)) {
-			sorted = new AppCoarseGrainedTree<Integer>();
+			sorted = new CoarseGrainedTree<Integer>();
 		} else if (dataStructure.equals(FGL)) {
 			sorted = new FineGrainedList<Integer>();
 		} else if (dataStructure.equals(FGT)) {
