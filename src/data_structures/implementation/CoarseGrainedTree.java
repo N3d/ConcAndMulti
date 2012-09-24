@@ -79,7 +79,7 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 		try{
 
 			if(root == null)
-				return ;
+				return;
 
 			recoursiveRemove(root,root, node);
 		}finally{
