@@ -1,5 +1,7 @@
 package data_structures.implementation;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import data_structures.Sorted;
 
 
@@ -18,18 +20,23 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 
 	public CoarseGrainedTree(){
 		this.root=null;
+		lock = new ReentrantLock();
 	}
 
 	@Override
 	public void add(T t) {
+		System.out.println("New element"+t);
+		System.out.println(this.toString());
 		Node<T> newNode = new Node<T>(t);
 		lock.lock();
 		try{
 			if(t == null)
 				return;
 
-			if(root == null)
+			if(root == null){
 				this.root=newNode;
+				return;
+			}
 
 			 recoursiveAdd(root,root, newNode);
 		}finally{
@@ -41,6 +48,8 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 	private boolean recoursiveAdd(Node<T> parent,Node<T> index,Node<T> newNode){
 		if(parent == null || index == null || newNode == null)
 			return false;
+		
+		System.out.println("Current:"+index.value+" new:"+newNode.value);
 
 		if(newNode.compareTo(index)==0){
 			//the new node will take the place of the 
@@ -74,6 +83,8 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 
 	@Override
 	public void remove(T t) {
+		System.out.println("New element"+t);
+		System.out.println(this.toString());
 		Node<T> node = new Node<T>(t);
 		lock.lock();
 		try{
@@ -88,9 +99,11 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 	}
 
 	private boolean recoursiveRemove(Node<T> parent,Node<T> index,Node<T> newNode){
-		if(parent == null || index == null || newNode == null)
+		if(parent == null || index == null || newNode == null){
+			System.out.println("Fail!");
 			return false;
-
+		}
+		System.out.println("Current:"+index.value+" rem:"+newNode.value);
 		if(newNode.compareTo(index)==0){
 			//check if the it can remove the node easly.
 			if(index.left==null){
@@ -134,13 +147,21 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 	}
 
 	private Node<T> substituteLookUp(Node<T> parent,Node<T> node){
-		if(parent == null || node == null)
+		if(parent == null || node == null){
+			System.out.println("Fail222!");
 			return null;
+		}
 		if(node.isLeaf()){
 			if(node.equals(parent.left))
 				parent.left=null;
 			else
 				parent.right=null;
+			return node;
+		}else if(node.left==null){
+			if(node.equals(parent.left))
+				parent.left=node.right;
+			else
+				parent.right=node.right;
 			return node;
 		}else{
 			return substituteLookUp(node, node.left);
