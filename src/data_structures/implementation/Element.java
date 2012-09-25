@@ -6,10 +6,10 @@ package data_structures.implementation;
  *
  */
 
-public class Element<T> {
+public class Element<T extends Comparable<T>> implements Comparable<Element<T>>{
 	
-	private T value;
-	private Element<T> next;
+	public T value;
+	public Element<T> next;
 	
 	public Element(){
 		this.value=null;
@@ -35,5 +35,10 @@ public class Element<T> {
 	
 	public void setNext(Element<T> next){
 		this.next=next;
+	}
+
+	@Override
+	public int compareTo(Element<T> o) {
+		return (this.value).compareTo(o.value);
 	}
 }
