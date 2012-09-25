@@ -17,7 +17,7 @@ import data_structures.implementation.LockFreeTree;
 
 public class Main {
 
-	private static final boolean ALLOW_DOUBLE_ELEMENTS = true;
+	private static final boolean ALLOW_DOUBLE_ELEMENTS = false; //need to be changed back to true
 
 	private static final String CGL = "cgl";
 	private static final String CGT = "cgt";
