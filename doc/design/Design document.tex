@@ -1,0 +1,84 @@
+\documentclass[12pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or epsß with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb}
+
+% nicely display code
+\usepackage{color}
+\usepackage{listings}
+\lstset{ %
+language=Java,                % choose the language of the code
+basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+numbers=left,                   % where to put the line-numbers
+numberstyle=\footnotesize,      % the size of the fonts that are used for the line-numbers
+stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
+numbersep=5pt,                  % how far the line-numbers are from the code
+backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings adding particular underscores
+frame=single,           % adds a frame around the code
+tabsize=2,          % sets default tabsize to 2 spaces
+captionpos=b,           % sets the caption-position to bottom
+breaklines=true,        % sets automatic line breaking
+breakatwhitespace=false,    % sets if automatic breaks should only happen at whitespace
+escapeinside={\%*}{*)}          % if you want to add a comment within your code
+}
+
+\title{Concurrency and Multithreading\\
+Design Document}
+\author{Carmine Paolino\\
+cpo800@vu.nl\\
+2206417}
+\date{}							% Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+% \section{TODO}
+% \begin{itemize}
+% \item Give details on your approach to implement the data structures
+% \item Form hypotheses about the performance and scalability of each data structure
+% \item Try to estimate the performance of the data structures by taking into account the number of elements in the data structure, the number of threads operating on the data structures, and the amount of work a thread is doing in comparison to inserting/removing an element
+% \item Support your claims
+% \end{itemize}
+% 
+% \section{Notes}
+% The data structures in the book don't allow double elements, whereas my implementations do. Another difference to note is that my data structures don't rely on hashes to implement ordering, but they implement total ordering through the \texttt{Comparable<T>} interface.
+% 
+% \subsection{CoarseGrainedList}
+% \begin{lstlisting}
+% private class Node {
+% 	T item;
+% 	Node next;
+% }
+% \end{lstlisting}
+
+\section{CoarseGrainedList}\label{sec:coarse_grained_list}
+For this data structure a (partial) implementation is provided in the book at Figures 9.4 and 9.5. Therefore, all the considerations found in the book still hold true. However, there are two differences between our data structure and the one in the book. The latter doesn't allow for multiple identical elements, therefore our \texttt{add(T t)} function will never return false, and it implements ordering by using hashes. Our implementation of the CoarseGrainedList allows multiple nodes to have the same item instead, and it uses the \texttt{Comparable<T>} interface for ordering the \texttt{Node}s. This changes the algorithm very slightly, by comparing the items itself instead of the key.
+
+As already noted in the book, since this data structure uses a coarse-grained lock its performance is determined by contention: the larger the number of threads that want to access this data structure at the same time, the worse the performance. So as the number of threads is increased, a coarse-grained data structure does not scale, and it could actually perform worse than the baseline, due to the overhead that the lock itself introduces. However, the speedup is not linked to the number of elements in the list, but since this data structure searches the correct element or position from the head onward, the amount of work each thread has to do increases linearly with the number of elements in the list, so it looks like $O(n)$ for both the \texttt{add(T t)} and the \texttt{remove(T t)} function.
+
+
+\section{CoarseGrainedTree}
+Similarly to the CoarseGrainedList (see Section~\ref{sec:coarse_grained_list}), a CoarseGrainedTree needs to be locked entirely when an element is added or removed. So the implementation is similar to a binary search tree, but every method implementation is wrapped inside a \texttt{try\dots{}finally} block that ensures that the lock is acquired and released even in case of exceptions.
+
+Thus the same speedup considerations about the CoarseGrainedList apply to the CoarseGrainedTree. The amount of work each thread has to do is the same as a serial binary search tree, so is $O(\log n)$ in the average case and $O(n)$ in the worst case, for both the \texttt{add(T t)} and the \texttt{remove(T t)} function.
+
+\section{FineGrainedList}
+For this data structure a (partial) implementation is provided in the book at Figures 9.6 and 9.7. Therefore, all the considerations found in the book still hold true. However, as for the CoarseGrainedList (see Section~\ref{sec:coarse_grained_list}), there are two differences between our data structure and the one in the book. The latter doesn't allow for multiple identical elements, therefore our \texttt{add(T t)} function will never return false, and it implements ordering by using hashes. Our implementation of the FineGrainedList allows multiple nodes to have the same item instead, and it uses the \texttt{Comparable<T>} interface for ordering the \texttt{Node}s. This changes the algorithm very slightly, by comparing the items itself instead of the key.
+
+Locking only two elements of the list, as opposed to the whole list in the case of the CoarseGrainedList (see Section~\ref{sec:coarse_grained_list}), this data structure scales better to more threads, because threads following other threads in the search have to wait only on one lock at a time (the leftmost, closest to the head). Therefore, performance is determined by how fast the rightmost, closest to tail thread proceeds because the other threads have to wait for it to release its leftmost element in order to proceed with their computation. In terms of speedup, this means that we can't achieve a linear speedup, but probably our speedup graph will look more like a logarithmic function. In this case though, the speedup is connected to the number of elements in the list, because the more elements, the more threads can operate on the list. In fact, with zero and 1 elements, a FineGrainedList operates the same as a CoarseGrainedList.
+
+
+% \section{FineGrainedTree}
+% This binary search tree is similar to a CoarseGrainedTree, but uses fine-grained locks, so locks at the nodes of the tree. Multiple concurrent updates on different parts of the tree should be allowed.
+% \section{LockFreeList}
+% The following two data structures are only meant for Master students. This lock-free linked list should not use locks, but compare-and-set instructions to give freedom of blocking. Section 9.8 in [2] discusses an example of a lock-free list.
+% \section{LockFreeTree}
+% We ask Master students to also implement a lock-free binary search tree. This is a challenging task, and we therefore drop the requirement of allowing double elements in the tree. Ellen et al. discuss a leaf-based (values are only stored in leaf nodes) implementation in [1]. We ask you to implement this lock-free binary search tree. Follow the algorithm as described in the paper.
+
+\end{document}  

@@ -1,0 +1,71 @@
+\section{LockFreeTree}
+
+In the paper \cite{nonblock} is described a design and an implementation of the Non-Blocking Binary Search Tree. This is the same structure we have to follow and use to implement our Lock Free Tree. At this point we do not have the restriction of using double element anymore, the only difference in our case is that the internal node implementation.\newline
+
+The paper introduces also two new structures \emph{DInfo} and \emph{IInfo}. The first one contains the information necessary to remove a node; the second contains the information for the insertion of a new value in the tree. These two structures are introduced in order to permit other threads to help the updating procedure. They also extend the class Info.\newline
+
+The IInfo structure can be represented as follow:\newline
+
+\begin{lstlisting}
+	class IInfo extend Info{
+		Node p;
+		Node l;
+		Node newInternal;
+	}
+\end{lstlisting}
+
+The DInfo structure can be represented as follow:\newline
+
+\begin{lstlisting}
+	class DInfo extend Info{
+		Node gp;
+		Node p;
+		Node l;
+		StateInfo si;
+	}
+\end{lstlisting}
+
+These two structures are created when an add or a remove operation is performed. The StateInfo structure represents the couple of values state and info that are stored in the internal node. In the internal node the state contains the flag that specify in which state it is during an update operation. The info contains the link to either an IInfo object or a DInfo object, where all the information for the update operation are stored. The StateInfo object in DInfo is a copy of the old value of the StateInfo object of the internal node.\newline
+
+The StateInfo structure can be represented as follow:\newline
+
+\begin{lstlisting}
+	class StateInfo{
+		String state;
+		Info info;	
+	}
+\end{lstlisting}
+
+At this point the internal node has the following structure:\newline
+
+\begin{lstlisting}
+	class Internal<T> extend Node{
+		AtomicReference<StateInfo> si;
+		T value;
+		Node<T> left;
+		Node<T> right;	
+	}
+\end{lstlisting}
+
+As we can see, the node contains an \emph{AtomicReference} object. It is the object that permits to use the \emph{compareAndSet} method for the atomic operation. It has \emph{StateInfo} as generic type in order to make the updating procedure of the values of \emph{state} and \emph{info} a single atomic operation.
+
+The leaf contains only the value and it extends the type \emph{Node} as well as the internal node.\newline
+
+Another big difference from the paper is that we have the \emph{toString} method that print the structure. We assume that, as the other methods  this one also helps to update the structure. It does not print the value of the leaf until the status of the internal node that it has reached is \emph{CLEAN}. In this way, there are no consistency problems of the printed structure.\newline
+
+All the concurrency problems are solved by the algorithm proposed in the paper so we do not have to add additional structure to solve them. 
+
+
+The performances of this structure are the best we can reach. It is fully scaled and every thread that competes for an update helps to resolve the status that could make it wait. In this way none of them actually wait without doing anything but every one works to resolve the problem. Of course, having a bigger number of thread compare to the number of node does not help much because they will do the same work. 
+
+In this case, we do not have overhead produced by the locks because all the work is performed by the atomic method \emph{compareAndSet}.
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,69 @@
+\section{FineGrainedList}
+\label{finegrainedlist}
+%\node[list,on chain,style={draw=blue!50}] (A) {12};
+
+
+Fine Grained List has the same structure of the one described in section \ref{coarsegrainedlist}. The only difference now is that it does not require the lock for the whole structure anymore. This relaxation in the requirements permits to have one lock for each element of the list permitting then to work in different parts of the list at the same time. 
+
+
+On the other hand, this increases the complexity of the checks in order to maintain the consistency of the structure.\newline
+
+%The requirements define that the whole list has to be blocked in order to make any changes (add, remove). This means that we need only one lock for all the structure. In order to do that the code can use the simple java Lock. When a method modifies the list, it will acquire this lock until it finishes the updating of the list. The other threads have to wait until the previous thread releases it in order to acquire the lock and then update the list.\newline
+
+
+The new element of the list can be represented as following:\newline
+
+\begin{lstlisting}
+	class Element<T>{
+		boolean marked;
+		Lock lock;
+		T value;
+		Element<T> next;
+	}
+\end{lstlisting}
+
+Using multiple locks makes difference in the \emph{add} and \emph{remove} methods. In order to \emph{add} or \emph{remove} an element in the list, the methods have to find the correct position in the list and select the two element: predecessor and current. Then they have to lock these two elements and eventually make the changes. Instead, the method \emph{toString} needs only to lock the current element. In this way it will print the status of the structure at the moment it is moving through the structure. Of course this will not be the real status of the whole structure because in the meanwhile it is printing one part, another thread could remove an element that the \emph{toString} already printed.\newline
+
+
+As described in the book, section 9.7, between the research of the element and the lock of the element another thread can modify the list, even removing the element already found. For this reason it is introduced a \emph{validation} method to check the status of the locked elements. This resolves the concurrency problem between multiple threads working on the same part of the list. The status consists of a flag that marks an element when it is removed. This is called logic remove.\newline
+
+The pseudo code for the generic update method will be as the following:\newline
+
+\begin{lstlisting}
+	update(T value){
+		if searchElementInTheList is true then{
+			select the predecessor and current element
+		}
+			return false
+		lock predecessor 
+		lock current
+		if validation is true then{
+			update procedure
+			unlock current
+			unlock predecessor
+			return true
+		}else
+			unlock current
+			unlock predecessor
+			return update(value)
+	}
+\end{lstlisting}
+
+The update procedure consist of adding or removing an element from the list. If the validation fails the update method restarts from the beginning.
+
+
+It is also important to notice that the order of the locks has an important meaning for the concurrency. All the threads have to lock the elements with the same order: first the \emph{predecessor} and then the \emph{current} element. If it is not so, deadlocks can occur. Moreover, the order of the updates of the links is important, for example to add a new element: first update the new element link to \emph{current}, and then update the \emph{predecessor} to the new element. This order avoids to break the chain and that if another thread goes through the list during an updating procedure it will not occur find a cul-de-sac.
+
+
+The double elements are managed as described in the section \ref{coarsegrainedlist} for the Coarse Grained List.\newline
+
+
+Locking only two elements of the list, all the others are free and others threads can modify them without being stopped by the first one. This means that if we have a sufficiently big number of elements all the threads can pretty much work at the same time. This is a big step forward for the performances compare to the Coarse Grained List. If the number of elements is not sufficiently big for the number of threads, of course the performances return close to the ones of the previous kind of list. The threads will be stopped by the locks of the others. 
+
+Moreover, the lock itself require time. Using a lot of locks, we have a lot of communication with the kernel and each time the bus at hardware level has to be locked and released. This produce overhead.
+
+
+
+
+
+

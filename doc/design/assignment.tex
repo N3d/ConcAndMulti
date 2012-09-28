@@ -1,0 +1,123 @@
+%
+%  assignment
+%
+%  Created by Matteo Casenove on 2012-09-10.
+%  Copyright (c) 2012 . All rights reserved.
+%
+\documentclass[]{article}
+
+% Use utf-8 encoding for foreign characters
+\usepackage[utf8]{inputenc}
+
+% Setup for fullpage use
+\usepackage{fullpage}
+
+% Uncomment some of the following if you use the features
+%
+% Running Headers and footers
+%\usepackage{fancyhdr}
+
+% Multipart figures
+%\usepackage{subfigure}
+
+% More symbols
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+%\usepackage{latexsym}
+
+% Surround parts of graphics with box
+\usepackage{boxedminipage}
+
+% Package for including code in the document
+\usepackage{listings}
+\usepackage{color}
+\usepackage{float}
+
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true
+  tabsize=3
+}
+
+\usepackage{tikz}
+\usetikzlibrary{calc,shapes.multipart,chains,arrows}
+
+% If you want to generate a toc for each chapter (use with book)
+%\usepackage{minitoc}
+
+% This is now the recommended way for checking for PDFLaTeX:
+\usepackage{ifpdf}
+
+%\newif\ifpdf
+%\ifx\pdfoutput\undefined
+%\pdffalse % we are not running PDFLaTeX
+%\else
+%\pdfoutput=1 % we are running PDFLaTeX
+%\pdftrue
+%\fi
+
+
+\title{1st Assignment Concurrency and Multithreading}
+\author{Matteo Casenove (mce470, S2517141), Nicola Mularoni(nmi520, s2523003)}
+
+\date{\today}
+
+\begin{document}
+
+%\ifpdf
+%\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
+%\else
+%\DeclareGraphicsExtensions{.eps, .jpg}
+%\fi
+
+\maketitle
+
+%\let\clearpage\relax
+
+\input{coarseGrainedList}
+
+\input{coarseGrainedTree}
+
+\input{fineGrainedList}
+
+\input{fineGrainedTree}
+
+\input{lockFreeList}
+
+\input{lockFreeTree}
+
+
+%\begin{abstract}
+%\end{abstract}
+
+%\section{Introduction}
+
+%\bibliographystyle{plain}
+%\bibliography{}
+
+\begin{thebibliography}{9}
+
+\bibitem{nonblock}
+  Faith Ellen, Panagiota Fatourou
+  \emph{Non-blocking Binary Search Trees}.
+  2010.
+
+\end{thebibliography}
+
+\end{document}

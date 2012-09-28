@@ -1,0 +1,55 @@
+\section{CoarseGrainedList}
+\label{coarsegrainedlist}
+
+\begin{figure}[H]
+	\centering
+\begin{tikzpicture}[list/.style={rectangle split, rectangle split parts=2,
+    draw, rectangle split horizontal}, >=stealth, start chain]
+
+  \node[list,on chain] (A) {12};
+  \node[list,on chain] (B) {27};
+  \node[list,on chain] (C) {99};
+  %\node[on chain,draw,inner sep=6pt] (D) {};
+  %\draw (D.north east) -- (D.south west);
+  %\draw (D.north west) -- (D.south east);
+  \draw[*->] let \p1 = (A.two), \p2 = (A.center) in (\x1,\y2) -- (B);
+  \draw[*->] let \p1 = (B.two), \p2 = (B.center) in (\x1,\y2) -- (C);
+  %\draw[*->] let \p1 = (C.two), \p2 = (C.center) in (\x1,\y2) -- (D);
+\end{tikzpicture}
+	\caption{Example of list}
+	\label{fig:list}
+\end{figure}
+
+This structure represent a really basic list structure. Each element of the list is a pair (Value, Next). It permits to insert double elements in the same list. When a new element is added to the list it must be placed right after the last element lesser or equal at it.\newline
+
+The requirements define that the whole list has to be blocked in order to make any changes (add, remove). This means that we need only one lock for all the structure. In order to do that the code can use the simple java Lock. When a method modifies the list, it will acquire this lock until it finishes the updating of the list. The other threads have to wait until the previous thread releases it in order to acquire the lock and then update the list. This is valid also for the \emph{toString} method that prints all the structure.\newline
+
+
+An element of the list can be represented as following:\newline
+
+\begin{lstlisting}
+	class Element<T>{
+		T value;
+		Element<T> next;
+	}
+\end{lstlisting}
+
+As well as the next ones, the element implements the \emph{Comparable$<$T$>$} interface in order to sort the element in the list. This requires to implement the method \emph{compareTo} using the generic type T.
+
+The \emph{toString} method will produce the following output for the list represented in figure \ref{fig:list}:\newline
+
+\begin{lstlisting}
+	[12][27][99]
+\end{lstlisting}
+
+
+The performance of this kind of list is $\mathcal{O}(N)$, where $N$ is the number of elements in the list. To add a new element to the list, the method must go through to the whole list doing at most $N$ steps.\newline
+
+
+Unfortunately the coarse-grained locking significantly reduce opportunity for parallelism so, using only one lock for the whole structure it is not possible to scale it. Even using more threads working at the same structure, only one of them can work on it at a time since the lock is unique for the all structure. There is no increasing of performances using multiple threads.
+
+
+
+
+
+

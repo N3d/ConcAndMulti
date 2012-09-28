@@ -1,0 +1,29 @@
+\section{LockFreeList}
+\label{lockfreelist}
+
+To implement a non-blocking structure, we need atomic \emph{read-modify-write} primitives that the hardware must provide; the paragraph 9.8 of the book shows how \emph{compareAndSet} can be used in combination with the \emph{AtomicMarkableReference<T>}  (provided by \textbf{java.util.concurrent.atomic} ) that in our case incapsulate both a reference to an object of type T and the Boolean mark introduced in \ref{finegrainedlist} and in \ref{finegrainedtree} producing an atomical update of both of them.
+\newline
+
+By doing this we ensure that a node's fields cannot be updated after that node has been logically or physically removed from the list. 
+
+The new element of the list can be represented as following:\newline
+
+\begin{lstlisting}
+	class Element<T>{
+		boolean marked;
+		Lock lock;
+		T value;
+		AtomicMarkableReference<Element<T>> next;
+	}
+\end{lstlisting}
+
+We also need that each thread that want to perform an add or a remove operation, while traverses the list, cleans up the list by physically removing any marked nodes it encounters.
+
+The main differences between the structure we are asked to implement and the one described in book are the use of the interface Comparable and the presence of duplicated keys.
+
+The first difference mainly affects the comparison between the nodes that are made through the method \emph{compareTo} provided by the interface;
+the second difference is dealt like in \ref{coarsegrainedlist} and in \ref{finegrainedlist}.
+
+The method \emph{toString} needs to check if the node is marked or not through the method \emph{isMarked} provided by the \emph{AtomicMarkableReference} class before printing it; the only problem that could arise is if between the result of isMarked and the actual print of the node another thread mark the node as logically deleted but like in the other structure discussed above, this method prints an image of the structure as it appears while the method is traversing it.
+
+The introduction of atomic modification of a reference and a Boolean mark causes an overhead that impacts on the performance and also the fact that both \emph{add} and \emph{remove} could engage in concurrent cleanup of removed nodes introduces the possibility of contention among threads.
