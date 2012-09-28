@@ -16,13 +16,17 @@ public class Element<T extends Comparable<T>> implements Comparable<Element<T>>{
 		this.next=null;
 	}
 	
-	public Element(T value,Element<T> next){
+	public Element(T value){
 		this.value=value;
-		this.next=next;
+		this.next=null;
 	}
 	
 	public T getValue(){
 		return this.value;
+	}
+	
+	public boolean isNull(){
+		return (this.value==null);
 	}
 	
 	public Element<T> getNext(){
