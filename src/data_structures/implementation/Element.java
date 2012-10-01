@@ -7,7 +7,6 @@ package data_structures.implementation;
  */
 
 public class Element<T extends Comparable<T>> implements Comparable<Element<T>>{
-<<<<<<< HEAD
 	
 	static final int ELEMENT = 0;
 	static final int HEAD = 1;
@@ -16,13 +15,7 @@ public class Element<T extends Comparable<T>> implements Comparable<Element<T>>{
 	public T value;
 	public Element<T> next;
 	private int type;
-	
-=======
 
-	public T value;
-	public Element<T> next;
-
->>>>>>> CoarseGrainedList
 	public Element(){
 		this.value=null;
 		this.next=null;
@@ -33,13 +26,8 @@ public class Element<T extends Comparable<T>> implements Comparable<Element<T>>{
 		this.type=ELEMENT;
 		this.next=null;
 	}
-<<<<<<< HEAD
 	
 	public Element(T value, int type){
-=======
-
-	public Element(T value, Element<T> next){
->>>>>>> CoarseGrainedList
 		this.value=value;
 		this.type=type;
 		this.next=null;
