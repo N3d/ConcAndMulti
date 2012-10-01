@@ -12,7 +12,7 @@ public class FineElement<T extends Comparable<T>> extends Element<T>{
 	}
 	
 	public FineElement(T t){
-		super(t);
+		super(t,new FineElement<T>());
 		this.lock = new ReentrantLock();
 	}
 	
@@ -21,7 +21,10 @@ public class FineElement<T extends Comparable<T>> extends Element<T>{
 	}
 	
 	public void unlock(){
-		this.lock.unlock();
+		try{
+			this.lock.unlock();
+		}catch(IllegalMonitorStateException e){
+		}
 	}
 
 }
