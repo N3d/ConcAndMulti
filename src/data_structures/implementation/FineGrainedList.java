@@ -89,10 +89,13 @@ public class FineGrainedList<T extends Comparable<T>> implements Sorted<T> {
 
 	public String toString() {
 		String ris="";
-		for(FineElement<T> curr=(FineElement<T>) this.head.next;curr.isTail();curr=(FineElement<T>) curr.next){
+		for(FineElement<T> curr=(FineElement<T>) this.head.next;!curr.isTail();curr=(FineElement<T>) curr.next){
 			ris+="["+curr.getValue()+"]";
 			if(!curr.next.isTail())
 				ris+="->";
+		}
+		if("".compareTo(ris)==0){
+			ris="[]";
 		}
 		return ris; 
 	}
