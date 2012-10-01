@@ -4,22 +4,17 @@ import data_structures.Sorted;
 
 public class FineGrainedList<T extends Comparable<T>> implements Sorted<T> {
 	
-	
-	/*
-	 * This list creates an fineElement with empty value to consider a null element.
-	 * This is due to the fact that the head has to have a lock even if it is null.
-	 * So a empty list has one single element with value null.
-	 * FineElement has a method called isNull to test if its value is null.
-	 * NO!
-	 */
 
 	private FineElement<T> head;
+	private FineElement<T> tail;
 
 	public FineGrainedList(){
 		this.head=new FineElement<T>();
+		this.head.setHead();
+		this.tail=new FineElement<T>();
+		this.tail.setTail();
 	}
 
-	@SuppressWarnings("null")
 	public void add(T t) {
 		FineElement<T> newEle = new FineElement<T>(t);
 
@@ -31,27 +26,14 @@ public class FineGrainedList<T extends Comparable<T>> implements Sorted<T> {
 		if(t == null)
 			return;
 
-
-		head.lock();
-		if(head.isNull()){
-			try{
-				this.head=newEle;
-				return;
-			}finally{
-				this.head.unlock();
-			}
-		}
-		FineElement<T> pred = head;
+		head.lock(); //this is because, we cannot permit that the head changes between this and the
+					// next instruction.
+		FineElement<T> pred=head;
 		try{
-		
-			FineElement<T> curr = (FineElement<T>) pred;
-			//curr.lock();
+			FineElement<T> curr=(FineElement<T>) pred.next;
+			curr.lock();
 			try{
-				while(curr!=null && !curr.isNull() && newEle.compareTo(curr)<0){
-					if(pred.equals(curr)){
-						curr=(FineElement<T>) curr.next;
-						curr.lock();
-					}
+				while(newEle.compareTo(curr)<0){
 					pred.unlock();
 					pred=curr;
 					curr=(FineElement<T>) curr.next;
@@ -62,41 +44,12 @@ public class FineGrainedList<T extends Comparable<T>> implements Sorted<T> {
 				return;
 			}finally{
 				curr.unlock();
-			}
-		
+			}	
 		}finally{
 			pred.unlock();
 		}
 	}
 
-/*	private boolean recoursiveAdd(FineElement<T> pred,FineElement<T> curr,FineElement<T> newEle){
-		if (newEle==null || newEle.isNull()){
-			pred.unlock();
-			return false;
-		}
-
-		if(curr == null || curr.isNull()){
-			pred.next=newEle;
-			pred.unlock();
-			return true;	
-		}
-
-		//System.out.println("Current:"+index.value+" new:"+newNode.value);
-		curr.lock();
-		// It is not necessary to check the pred again because as long as it is locked none can 
-		// add new item next to it or remove it. So it is safe.
-		if(newEle.compareTo(curr)>=0){
-			newEle.next=curr;
-			pred.next=newEle;
-			pred.unlock();
-			curr.unlock();
-			return true;
-		}else{
-			pred.unlock();
-			return recoursiveAdd(curr,(FineElement<T>) curr.next,newEle);
-		}
-	}
-*/ 
 	public void remove(T t) {
 		FineElement<T> newEle = new FineElement<T>(t);
 
@@ -109,38 +62,37 @@ public class FineGrainedList<T extends Comparable<T>> implements Sorted<T> {
 			return;
 
 		head.lock();
-		if(head.isNull()){
-			try{
-				return;
-			}finally{
-				head.unlock();
-			}
-		}
-		FineElement<T> pred = head;
+		FineElement<T> pred=head;
 		try{
-			FineElement<T> curr = (FineElement<T>) pred.next;
+			FineElement<T> curr=(FineElement<T>) pred.next;
 			curr.lock();
 			try{
-				while((curr!=null || !curr.isNull()) && newEle.compareTo(curr)<0){
+				while(newEle.compareTo(curr)<0){
 					pred.unlock();
 					pred=curr;
 					curr=(FineElement<T>) curr.next;
-					if(curr.next!=null || !curr.next.isNull()){
-						curr.lock();
-					}
+					curr.lock();
 				}
-				newEle.next=curr;
-				pred.next=newEle;
+				if(curr.isTail())
+					return;
+				pred.next=curr.next;
 				return;
 			}finally{
 				curr.unlock();
 			}
+			
 		}finally{
 			pred.unlock();
 		}
 	}
 
 	public String toString() {
-		throw new UnsupportedOperationException();
+		String ris="";
+		for(FineElement<T> curr=(FineElement<T>) this.head.next;curr.isTail();curr=(FineElement<T>) curr.next){
+			ris+="["+curr.getValue()+"]";
+			if(!curr.next.isTail())
+				ris+="->";
+		}
+		return ris; 
 	}
 }

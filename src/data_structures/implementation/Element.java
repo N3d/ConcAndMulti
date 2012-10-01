@@ -8,8 +8,13 @@ package data_structures.implementation;
 
 public class Element<T extends Comparable<T>> implements Comparable<Element<T>>{
 	
+	static final int ELEMENT = 0;
+	static final int HEAD = 1;
+	static final int TAIL = 2;
+	
 	public T value;
 	public Element<T> next;
+	private int type;
 	
 	public Element(){
 		this.value=null;
@@ -18,12 +23,30 @@ public class Element<T extends Comparable<T>> implements Comparable<Element<T>>{
 	
 	public Element(T value){
 		this.value=value;
+		this.type=ELEMENT;
 		this.next=null;
 	}
 	
-	public Element(T value, Element<T> next){
+	public Element(T value, int type){
 		this.value=value;
-		this.next=next;
+		this.type=type;
+		this.next=null;
+	}
+	
+	public void setHead(){
+		this.type=Element.HEAD;
+	}
+	
+	public void setTail(){
+		this.type=Element.TAIL;
+	}
+	
+	public boolean isHead(){
+		return (this.type==Element.HEAD);
+	}
+	
+	public boolean isTail(){
+		return (this.type==Element.TAIL);
 	}
 	
 	public T getValue(){
@@ -48,6 +71,10 @@ public class Element<T extends Comparable<T>> implements Comparable<Element<T>>{
 
 	@Override
 	public int compareTo(Element<T> o) {
+		if(this.isHead()) return 1;
+		if(this.isTail()) return -1;
+		if(o.isHead()) return -1;
+		if(o.isTail()) return 1;
 		return (this.value).compareTo(o.value);
 	}
 }
