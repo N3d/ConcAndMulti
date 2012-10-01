@@ -13,6 +13,7 @@ public class FineGrainedList<T extends Comparable<T>> implements Sorted<T> {
 		this.head.setHead();
 		this.tail=new FineElement<T>();
 		this.tail.setTail();
+		this.head.next=this.tail;
 	}
 
 	public void add(T t) {
