@@ -40,7 +40,7 @@ public class CoarseGrainedList<T extends Comparable<T>> implements Sorted<T> {
 		try {
 			pred = head;
 			curr = pred.next;
-			while (curr.getValue().compareTo(item) == -1) {
+			while (curr.value.compareTo(item) == -1) {
 				pred = curr;
 				curr = curr.next;
 			}
@@ -57,19 +57,14 @@ public class CoarseGrainedList<T extends Comparable<T>> implements Sorted<T> {
 	private ArrayList<T> toArrayList() {
 		Element<T> pred, curr;
 		ArrayList<T> array = new ArrayList<T>();
-//		lock.unlock();
-//		try {
-			pred = head;
-			curr = pred.next;
-			while (curr.next != null) {
-				array.add(curr.value);
-				pred = curr;
-				curr = curr.next;
-			}
+		pred = head;
+		curr = pred.next;
+		while (curr.next != null) {
+			array.add(curr.value);
+			pred = curr;
+			curr = curr.next;
+		}
 
-			return array;
-//		} finally {
-//			lock.unlock();
-//		}
+		return array;
 	}
 }
