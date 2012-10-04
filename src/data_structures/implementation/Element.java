@@ -1,6 +1,6 @@
 package data_structures.implementation;
 /**
- * @author Matteo Casenove, Nicola Mularoni, and Carmine Paolino
+ * @author Matteo Casenove and Carmine Paolino
  * 
  * This class represents the generic element in the list.
  *
