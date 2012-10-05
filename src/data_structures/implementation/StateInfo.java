@@ -5,6 +5,7 @@ public class StateInfo{
 	public static final int CLEAN=1;
 	public static final int DFlag=2;
 	public static final int IFlag=3;
+	public static final int MARKED=4;
 	
 	public int state;
 	public LockFreeInfo info;
@@ -24,5 +25,9 @@ public class StateInfo{
 	
 	public boolean isIFlag(){
 		return state==IFlag;
+	}
+	
+	public boolean isMarked(){
+		return state==MARKED;
 	}
 }
