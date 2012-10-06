@@ -22,13 +22,13 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 				//do something
 			}
 			ret=search(newNode);
-			if(ret.l.getReference().compareTo(newNode)==0){
+			
+			if(ret.l.getReference().compareTo(newNode)==0)
 				return;
-				
-			}
+			
+			
 			if(ret.si!=null && !ret.si.getReference().isClean()){
-				//HELP
-				return;
+				Help(ret.si.getReference(), ret.stamps);
 			}else{
 				if(ret.l == null){
 					
@@ -38,61 +38,112 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 					LockFreeNode<T> ni=new LockFreeNode<T>(key);//new internal
 					ni.left.set((nl.compareTo(newNode)<0)?nl:newNode, 0);
 					ni.right.set((nl.compareTo(newNode)<0)?newNode:nl,0);
-					IInfo<T> op= new LockFreeInfo().new IInfo<T>(new AtomicStampedReference<LockFreeNode<T>>(ni,0),ret.p,ret.l);
+					LockFreeInfo<T>.IInfo<T> op= new LockFreeInfo<T>().new IInfo<T>(new AtomicStampedReference<LockFreeNode<T>>(ni,0),ret.p,ret.l);
 					StateInfo newStateInfo = new StateInfo(StateInfo.IFlag,op);
-					boolean ris=ret.p.getReference().si.compareAndSet(ret.si.getReference(), newStateInfo, ret.siStamp, ret.siStamp+1);
+					boolean ris=ret.p.getReference().si.compareAndSet(ret.si.getReference(), newStateInfo, ret.stamps.siStamp, ++ret.stamps.siStamp);
 					if(ris){
-						HelpInsert(op,newStateInfo,ret.siStamp+1,ret.p.getReference().left.getStamp(),ret.p.getReference().right.getStamp());
+						HelpInsert(op,ret.stamps);
 						return;
 					}else{
-						//help
+						Help(ret.si.getReference(), ret.stamps);
 					}
 				}
 			}
 		}	
 	}
 	
-	private void HelpInsert(IInfo<T> op, StateInfo oldSi,int oldStamp, int pLeftStamp, int pRightStamp){
-		CAS_CHILD(op.p, op.l, op.newInternal,pLeftStamp,pRightStamp);
-		op.p.getReference().si.compareAndSet(oldSi, new StateInfo(StateInfo.CLEAN,null), oldStamp, oldStamp+1);
+	private void HelpInsert(LockFreeInfo<T>.IInfo<T> op, Stamps stamps){
+		CAS_CHILD(op.p, op.l, op.newInternal,stamps.pLeftStamp,stamps.pRightStamp);
+		StateInfo app = op.p.getReference().si.getReference();
+		if(app.isIFlag() && app.info == op){
+			op.p.getReference().si.compareAndSet(app, new StateInfo(StateInfo.CLEAN,null), stamps.siStamp, ++stamps.siStamp);
+		}
 	}
 	
 	private void CAS_CHILD(AtomicStampedReference<LockFreeNode<T>> p, AtomicStampedReference<LockFreeNode<T>> l,
-			AtomicStampedReference<LockFreeNode<T>> ni,int pLeftStamp, int pRightStamp){
+			AtomicStampedReference<LockFreeNode<T>> ni,int pLeftStamp,int pRightStamp){
 		if(p.getReference().isLeaf() || ni==null)
 			return;
 		if(ni.getReference().compareTo(p.getReference())<0)
-			p.getReference().left.compareAndSet(l.getReference(), ni.getReference(), pLeftStamp, pLeftStamp+1);
+			p.getReference().left.compareAndSet(l.getReference(), ni.getReference(), pLeftStamp, ++pLeftStamp);
 		else
-			p.getReference().right.compareAndSet(l.getReference(), ni.getReference(), pRightStamp, pRightStamp+1);
+			p.getReference().right.compareAndSet(l.getReference(), ni.getReference(), pRightStamp, ++pRightStamp);
 	}
 	
-	private boolean HelpDelete(DInfo<T> op,StateInfo oldSi, int pOldStamp,int gpOldStamp){
+	private boolean HelpDelete(LockFreeInfo<T>.DInfo<T> op, Stamps stamps){
 		if(op==null)
 			return false;
-		boolean res = op.p.getReference().si.compareAndSet(op.si, new StateInfo(StateInfo.MARKED,op), pOldStamp, pOldStamp+1);
+		boolean res = op.p.getReference().si.compareAndSet(op.si, new StateInfo(StateInfo.MARKED,op), stamps.pStamp, ++stamps.pStamp);
 		if(res || op.p.getReference().si.getReference().isMarked()){
-			//helpMarked
+			HelpMarked(op, stamps);
 			return true;
 		}else{
-			//help
+			Help(op.si, stamps);
 			//THIS IS A FUCKING TRICK BUT I'VE NO IDEA HOW TO MADE IT IN ANOTHER WAY...
 			StateInfo app = op.gp.getReference().si.getReference();
 			if(app.isMarked() && app.info == op){
-				op.gp.getReference().si.compareAndSet(app, new StateInfo(StateInfo.CLEAN,op), gpOldStamp, gpOldStamp+1);
+				op.gp.getReference().si.compareAndSet(app, new StateInfo(StateInfo.CLEAN,op), stamps.gsiStamp, ++stamps.gsiStamp);
 			}
 			return false;
-			
-		}
-		
+		}	
 	}
 	
+	private void HelpMarked(LockFreeInfo<T>.DInfo<T> op, Stamps stamps){
+		if(op==null)
+			return;
+		AtomicStampedReference<LockFreeNode<T>> other;
+		if(op.p.getReference().right.getReference()==op.l.getReference())
+			other=op.p.getReference().left;
+		else
+			other=op.p.getReference().right;
+		CAS_CHILD(op.gp, op.p, other, stamps.gpLeftStamp,stamps.gpRightStamp);
+		
+		StateInfo app = op.gp.getReference().si.getReference();
+		if(app.isDFlag() && app.info == op){
+			op.gp.getReference().si.compareAndSet(app, new StateInfo(StateInfo.CLEAN,op), stamps.gpStamp, ++stamps.gpStamp);
+		}
+	}
 	
+	@SuppressWarnings("unchecked")
+	private void Help(StateInfo u, Stamps stamps){
+		if(u==null)
+			return;
+		switch(u.state){
+		case StateInfo.IFlag: 
+			HelpInsert((LockFreeInfo<T>.IInfo<T>)u.info, stamps);
+		case StateInfo.MARKED:
+			HelpMarked((LockFreeInfo<T>.DInfo<T>)u.info, stamps);
+		case StateInfo.DFlag:
+			HelpDelete((LockFreeInfo<T>.DInfo<T>)u.info, stamps);
+		}
+	}
 	
-	
-	
-	
-	
+	/*
+	 * Class necessary to take care of the stamps of each node and state.
+	 */
+	private class Stamps{
+		
+		public int siStamp;
+		public int gsiStamp;
+		public int pStamp;
+		public int gpStamp;
+		public int pLeftStamp;
+		public int pRightStamp;
+		public int gpLeftStamp;
+		public int gpRightStamp;
+		
+		public Stamps(int siStamp, int gsiStamp, int pStamp,
+		 int gpStamp,int pLeftStamp,int pRightStamp,int gpLeftStamp,int gpRightStamp){
+			this.siStamp=siStamp;
+			this.gsiStamp=gsiStamp;
+			this.pStamp=pStamp;
+			this.gpStamp=gpStamp;
+			this.pLeftStamp=pLeftStamp;
+			this.pRightStamp=pRightStamp;
+			this.gpLeftStamp=gpLeftStamp;
+			this.gpRightStamp=gpRightStamp;
+		}
+	}
 	
 	
 	private class SearchReturnValues{
@@ -101,8 +152,7 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 		public AtomicStampedReference<LockFreeNode<T>> l;
 		public AtomicStampedReference<StateInfo> si;
 		public AtomicStampedReference<StateInfo> gsi;
-		public int siStamp;
-		public int gsiStamp;
+		public Stamps stamps;
 		
 		public SearchReturnValues(AtomicStampedReference<LockFreeNode<T>> gp,AtomicStampedReference<LockFreeNode<T>> p,
 				AtomicStampedReference<LockFreeNode<T>> l,
@@ -112,8 +162,8 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 			this.l=l;
 			this.si=si;
 			this.gsi=gsi;
-			this.siStamp=si.getStamp();
-			this.gsiStamp=gsi.getStamp();
+			this.stamps=new Stamps(si.getStamp(), gsi.getStamp(), p.getStamp(), gp.getStamp(), p.getReference().left.getStamp(),
+							p.getReference().right.getStamp(), gp.getReference().left.getStamp(), gp.getReference().right.getStamp());
 		}
 	}
 	
