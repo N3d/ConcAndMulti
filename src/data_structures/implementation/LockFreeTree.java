@@ -100,13 +100,13 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 		if(Sorted.DEBUG){
 			System.out.println(this.toString());
 			try{
-			System.out.println("Gp:"+op.gp.getReference().value);
-			System.out.println("P:"+op.p.getReference().value);
-			System.out.println("l:"+op.l.getReference().value);
-			System.out.println("p.right:"+op.p.getReference().right.getReference());
-			System.out.println("p.left:"+op.p.getReference().left.getReference());
+				System.out.println("Gp:"+op.gp.getReference().value);
+				System.out.println("P:"+op.p.getReference().value);
+				System.out.println("l:"+op.l.getReference().value);
+				System.out.println("p.right:"+op.p.getReference().right.getReference());
+				System.out.println("p.left:"+op.p.getReference().left.getReference());
 			}catch(NullPointerException e){
-				e.;
+				e.printStackTrace();
 			}
 		}
 		if(op.l.getReference().compareTo(op.p.getReference().right.getReference())==0)
