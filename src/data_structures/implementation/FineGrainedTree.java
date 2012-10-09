@@ -75,9 +75,6 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 		if (curr == null) {
 			return;
 		}
-		if (t.equals(new Integer(12))) {
-			logger.finer("Removing 12");
-		}
 		switch (t.compareTo(curr.value)) {
 		case 0:
 			if (curr.left != null && curr.right != null) {
