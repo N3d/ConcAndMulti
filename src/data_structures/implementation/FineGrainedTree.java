@@ -127,29 +127,14 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 		switch (_new.value.compareTo(curr.value)) {
 		case -1:
 			logger.finer("curr.left = " + curr.left);
-			if (curr.left == null) {
-				curr.left = _new;
-				_new.parent = curr;
-			} else {
-				sequentialAdd(curr.left, _new);
-			}
+			sequentialInternalAdd(curr.left, _new);
 			break;
 		case 1:
 			logger.finer("curr.right = " + curr.right);
-			if (curr.right == null) {
-				curr.right = _new;
-				_new.parent = curr;
-			} else {
-				sequentialAdd(curr.right, _new);
-			}
+			sequentialInternalAdd(curr.right, _new);
 			break;
 		case 0:
-			if (curr.left == null) {
-				curr.left = _new;
-				_new.parent = curr;
-			} else {
-				sequentialAdd(curr.left, _new);
-			}
+			sequentialInternalAdd(curr.left, _new);
 			break;
 		default:
 			throw new UnsupportedOperationException();
