@@ -66,12 +66,10 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 			LockFreeNode<T> ni,int pLeftStamp,int pRightStamp){
 		if(p.isLeaf() || ni==null)
 			return;
-		boolean ris;
-
 		if(ni.compareTo(p)<0)
-			ris=p.left.compareAndSet(l, ni, pLeftStamp, ++pLeftStamp);
+			p.left.compareAndSet(l, ni, pLeftStamp, ++pLeftStamp);
 		else
-			ris=p.right.compareAndSet(l, ni, pRightStamp, ++pRightStamp);
+			p.right.compareAndSet(l, ni, pRightStamp, ++pRightStamp);
 	}
 
 	private boolean HelpDelete(DInfo<T> op){
@@ -157,7 +155,7 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 
 		AtomicStampedReference<LockFreeNode<T>> gp=new AtomicStampedReference<LockFreeNode<T>>(new LockFreeNode<T>(),0),
 				p=new AtomicStampedReference<LockFreeNode<T>>(new LockFreeNode<T>(),0);
-		AtomicStampedReference<LockFreeNode<T>> l=new AtomicStampedReference<LockFreeNode<T>>(new LockFreeNode<T>(),0);
+		AtomicStampedReference<LockFreeNode<T>> l;
 		AtomicStampedReference<StateInfo<T>> gsi=new AtomicStampedReference<StateInfo<T>>(new StateInfo<T>(StateInfo.CLEAN,null),0);
 		AtomicStampedReference<StateInfo<T>> si=new AtomicStampedReference<StateInfo<T>>(new StateInfo<T>(StateInfo.CLEAN,null),0);
 		
