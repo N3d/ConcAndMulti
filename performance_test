@@ -1,0 +1,8 @@
+#!/bin/bash
+
+res=$(./bin/test_data_structures $1 10 100 10)
+echo $res
+SFI=$IFS; IFS=:
+set -f
+val=($res)
+echo ${val[2]}

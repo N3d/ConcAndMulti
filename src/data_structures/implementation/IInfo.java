@@ -7,10 +7,13 @@ public class IInfo<T extends Comparable<T>> implements LockFreeInfo{
 	public LockFreeNode<T> p;
 	public LockFreeNode<T> l;
 	
+	public Stamps stamps;
+	
 	public IInfo(LockFreeNode<T> newInternal,LockFreeNode<T> p,
-			LockFreeNode<T> l){
+			LockFreeNode<T> l,Stamps stamps){
 		this.newInternal=newInternal;
 		this.p=p;
 		this.l=l;
+		this.stamps=stamps;
 	}
 }
