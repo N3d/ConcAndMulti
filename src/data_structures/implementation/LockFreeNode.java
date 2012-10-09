@@ -36,7 +36,7 @@ public class LockFreeNode<T extends Comparable<T>> extends Node<T> {
 	}
 	
 	public boolean isLeaf(){
-		return (left.getReference()==null && right.getReference()==null);
+		return (this.left.getReference()==null && this.right.getReference()==null);
 	}
 	
 	@Override
