@@ -1,6 +1,6 @@
 package data_structures.implementation;
 
-public class StateInfo{
+public class StateInfo<T extends Comparable<T>>{
 	
 	public static final int CLEAN=1;
 	public static final int DFlag=2;

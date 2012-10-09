@@ -70,7 +70,8 @@ public class Node<T extends Comparable<T>> implements Comparable<Node<T>> {
 
 	@Override
 	public int compareTo(Node<T> o) {
-		return (this.value).compareTo(o.value);
+		if(o==null || o.value==null) return -1;
+		return this.value.compareTo(o.value);
 	}
 
 }

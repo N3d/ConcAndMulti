@@ -11,5 +11,6 @@ public interface Sorted<T extends Comparable<T>> {
 	
 	public void remove(T t);
 	
+	@Override
 	public String toString();
 }
