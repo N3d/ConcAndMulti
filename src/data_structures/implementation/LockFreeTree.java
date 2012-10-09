@@ -55,6 +55,7 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 					StateInfo<T> newStateInfo = new StateInfo<T>(StateInfo.IFlag,op);
 					ris=ret.p.si.compareAndSet(ret.si, newStateInfo, op.stamps.siStamp, ++op.stamps.siStamp);
 					if(ris){
+						System.out.println("Aggiungo "+t+" con"+op.newInternal.value);
 						HelpInsert(op/*,ret.stamps*/);
 						return;
 					}else{
@@ -75,7 +76,7 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 		CAS_CHILD(op.p, op.l, op.newInternal,op.stamps.pLeftStamp,op.stamps.pRightStamp);
 		StateInfo<T> app = op.p.si.getReference();
 		if(app.isIFlag() && app.info == op){
-			op.p.si.compareAndSet(app, new StateInfo<T>(StateInfo.CLEAN,null), op.stamps.siStamp, ++op.stamps.siStamp);
+			op.p.si.compareAndSet(app, new StateInfo<T>(StateInfo.CLEAN,op), op.stamps.siStamp, ++op.stamps.siStamp);
 		}
 	}
 
@@ -89,8 +90,11 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 			ris=p.left.compareAndSet(l, ni, pLeftStamp, ++pLeftStamp);
 		else
 			ris=p.right.compareAndSet(l, ni, pRightStamp, ++pRightStamp);
-		//if(!ris)
-		//	System.out.println("Errore");
+		if(!ris){
+			System.out.println("Errore");
+		}else{
+			System.out.println("Eliminato"+toString());
+		}
 		
 		//root.compareAndSet(l.getReference(), p.getReference(), rootStamp, ++rootStamp);
 	}
@@ -107,7 +111,7 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 			Help(op.p.si.getReference()/*, stamps*/);
 			//THIS IS A FUCKING TRICK BUT I'VE NO IDEA HOW TO MADE IT IN ANOTHER WAY...
 			StateInfo<T> app = op.gp.si.getReference();
-			if(app.isMarked() && app.info == op){
+			if(app.isDFlag() && app.info == op){
 				op.gp.si.compareAndSet(app, new StateInfo<T>(StateInfo.CLEAN,op), op.stamps.gsiStamp, ++op.stamps.gsiStamp);
 			}
 			return false;
