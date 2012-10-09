@@ -2,34 +2,40 @@ package data_structures.implementation;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-public class FineNode<T extends Comparable<T>> extends Node<T> {
+public class FineNode<T extends Comparable<T>> {
 
-	public final ReentrantLock lock;
+	private ReentrantLock lock;
+	private T value;
 	private FineNode<T> left;
 	private FineNode<T> right;
 	private FineNode<T> parent;
 
 	public FineNode() {
-		super();
+		this.value = null;
+		this.left = null;
+		this.right = null;
+		this.parent = null;
 		lock = new ReentrantLock();
 	}
 
-	public FineNode(T t) {
-		super(t);
-		lock = new ReentrantLock();
+	public FineNode(T value) {
+		this();
+		this.setValue(value);
 	}
 	
-	public FineNode(T t, FineNode<T> parent) {
-		super(t, parent);
-		lock = new ReentrantLock();
+	public FineNode(T value, FineNode<T> parent) {
+		this();
+		this.setValue(value);
+		this.parent = parent;
 	}
 
 	public FineNode(T value, FineNode<T> left, FineNode<T> right) {
-		super(value, left, right);
-		lock = new ReentrantLock();
+		this();
+		this.setValue(value);
+		this.left = left;
+		this.right = right;
 	}
 
-	@Override
 	public FineNode<T> getLeft() {
 		return left;
 	}
@@ -38,7 +44,6 @@ public class FineNode<T extends Comparable<T>> extends Node<T> {
 		this.left = left;
 	}
 
-	@Override
 	public FineNode<T> getRight() {
 		return right;
 	}
@@ -47,7 +52,6 @@ public class FineNode<T extends Comparable<T>> extends Node<T> {
 		this.right = right;
 	}
 
-	@Override
 	public FineNode<T> getParent() {
 		return parent;
 	}
@@ -55,12 +59,25 @@ public class FineNode<T extends Comparable<T>> extends Node<T> {
 	public void setParent(FineNode<T> parent) {
 		this.parent = parent;
 	}
+
 	public void lock() {
 		lock.lock();
 	}
 
 	public void unlock() {
 		lock.unlock();
+	}
+
+	public T getValue() {
+		return value;
+	}
+
+	public void setValue(T value) {
+		this.value = value;
+	}
+
+	public ReentrantLock getLock() {
+		return lock;
 	}
 
 }

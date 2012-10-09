@@ -28,13 +28,15 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 
 		root.lock();
 		try {
-			if (root.value == null) {
-				root.value = t;
+			if (root.getValue() == null) {
+				root.setValue(t);
 			} else {
 				fineAdd(root, t);
 			}
 		} finally {
-			root.unlock();
+			if (root.getLock().isHeldByCurrentThread()) {
+				root.unlock();
+			}
 		}
 	}
 
@@ -60,101 +62,103 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 		if (curr == null) {
 			return;
 		}
-		switch (t.compareTo(curr.value)) {
+		switch (t.compareTo(curr.getValue())) {
 		case 0:
-			if (curr.left != null && curr.right != null) {
-				FineNode<T> successor = findMinChild(curr.right);
-				curr.value = successor.value;
-				replaceNodeInParent(successor, successor.right);
-			} else if (curr.left != null) {
-				replaceNodeInParent(curr, curr.left);
-			} else if (curr.right != null) {
-				replaceNodeInParent(curr, curr.right);
+			if (curr.getLeft() != null && curr.getRight() != null) {
+				FineNode<T> successor = findMinChild(curr.getRight());
+				curr.setValue(successor.getValue());
+				replaceNodeInParent(successor, successor.getRight());
+			} else if (curr.getLeft() != null) {
+				replaceNodeInParent(curr, curr.getLeft());
+			} else if (curr.getRight() != null) {
+				replaceNodeInParent(curr, curr.getRight());
 			} else {
 				replaceNodeInParent(curr, null);
 			}
 			break;
 		case -1:
-			fineRemove(curr.left, t);
+			fineRemove(curr.getLeft(), t);
 			break;
 		case 1:
-			fineRemove(curr.right, t);
+			fineRemove(curr.getRight(), t);
 			break;
 		}
 	}
 
 	private void replaceNodeInParent(FineNode<T> curr, FineNode<T> _new) {
-		if (curr.parent != null) {
-			if (curr == curr.parent.left) {
-				curr.parent.left = _new;
+		if (curr.getParent() != null) {
+			if (curr == curr.getParent().getLeft()) {
+				curr.getParent().setLeft(_new);
 			} else {
-				curr.parent.right = _new;
+				curr.getParent().setRight(_new);
 			}
 		} else {
 			root = _new;
 		}
 		if (_new != null) {
-			_new.parent = curr.parent;
+			_new.setParent(curr.getParent());
 		}
 	}
 
 	private FineNode<T> findMinChild(FineNode<T> right) {
-		while (right.left != null) {
-			right = right.left;
+		while (right.getLeft() != null) {
+			right = right.getLeft();
 		}
 		return right;
 	}
 
 	private void fineAdd(FineNode<T> curr, T t) {
 		if (curr != root) {
+			FineNode<T> parent = curr.getParent();
+			parent.unlock();
 			curr.lock();
 		}
 		try {
-			switch (t.compareTo(curr.value)) {
+			switch (t.compareTo(curr.getValue())) {
 			case -1:
-				logger.finer("curr.left = " + curr.left);
+				logger.finer("curr.left = " + curr.getLeft());
 				fineInternalAddLeft(curr, t);
 				break;
 			case 1:
-				logger.finer("curr.right = " + curr.right);
+				logger.finer("curr.right = " + curr.getRight());
 				fineInternalAddRight(curr, t);
 				break;
 			case 0:
-				logger.finer("curr.left = " + curr.left);
+				logger.finer("curr.left = " + curr.getLeft());
 				fineInternalAddLeft(curr, t);
 				break;
 			}
 		} finally {
-			if (curr != root) {
+			if (curr.getLock().isHeldByCurrentThread()) {
 				curr.unlock();
 			}
 		}
 	}
 
 	private void fineInternalAddRight(FineNode<T> curr, T t) {
-		if (curr.right == null) {
-			curr.right = new FineNode<T>(t, curr);
+		if (curr.getRight() == null) {
+			curr.setRight(new FineNode<T>(t, curr));
 		} else {
-			fineAdd(curr.right, t);
+			fineAdd(curr.getRight(), t);
 		}
 	}
 
 	private void fineInternalAddLeft(FineNode<T> curr, T t) {
-		if (curr.left == null) {
-			curr.left = new FineNode<T>(t, curr);
+		if (curr.getLeft() == null) {
+			curr.setLeft(new FineNode<T>(t, curr));
 		} else {
-			fineAdd(curr.left, t);
+			fineAdd(curr.getLeft(), t);
 		}
 	}
 
 	private void sequentialTraverse(FineNode<T> curr, Operation<T> operation) {
-		if (curr == null || curr.value == null) {
+		if (curr == null || curr.getValue() == null) {
 			return;
 		}
 		operation.start(curr);
-		sequentialTraverse(curr.left, operation);
+		sequentialTraverse(curr.getLeft(), operation);
 		operation.middle(curr);
-		sequentialTraverse(curr.right, operation);
+		sequentialTraverse(curr.getRight(), operation);
 		operation.end(curr);
 	}
 
@@ -185,7 +189,7 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 
 		@Override
 		public void start(FineNode<T> node) {
-			stringBuilder.append('[' + node.value.toString());
+			stringBuilder.append('[' + node.getValue().toString());
 		}
 
 		@Override
