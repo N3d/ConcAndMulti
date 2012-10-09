@@ -4,10 +4,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class FineNode<T extends Comparable<T>> extends Node<T> {
 
-	private final ReentrantLock lock;
-	public FineNode<T> left;
-	public FineNode<T> right;
-	public FineNode<T> parent;
+	public final ReentrantLock lock;
+	private FineNode<T> left;
+	private FineNode<T> right;
+	private FineNode<T> parent;
 
 	public FineNode() {
 		super();
@@ -29,6 +29,32 @@ public class FineNode<T extends Comparable<T>> extends Node<T> {
 		lock = new ReentrantLock();
 	}
 
+	@Override
+	public FineNode<T> getLeft() {
+		return left;
+	}
+
+	public void setLeft(FineNode<T> left) {
+		this.left = left;
+	}
+
+	@Override
+	public FineNode<T> getRight() {
+		return right;
+	}
+
+	public void setRight(FineNode<T> right) {
+		this.right = right;
+	}
+
+	@Override
+	public FineNode<T> getParent() {
+		return parent;
+	}
+
+	public void setParent(FineNode<T> parent) {
+		this.parent = parent;
+	}
 	public void lock() {
 		lock.lock();
 	}

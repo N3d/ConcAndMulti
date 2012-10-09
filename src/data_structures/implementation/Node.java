@@ -11,9 +11,9 @@ package data_structures.implementation;
 public class Node<T extends Comparable<T>> implements Comparable<Node<T>> {
 
 	public T value;
-	public Node<T> left;
-	public Node<T> right;
-	public Node<T> parent;
+	private Node<T> left;
+	private Node<T> right;
+	private Node<T> parent;
 
 	public Node() {
 		this.value = null;
