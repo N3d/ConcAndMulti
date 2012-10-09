@@ -24,23 +24,13 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 	public void add(T t) {
 		LockFreeNode<T> newNode=new LockFreeNode<T>(t);//new leaf
 		SearchReturnValues ret;
-		if(Sorted.DEBUG){
-			System.out.println(this.toString());
-			System.out.println("New element"+t);
-		}
-		while(true){
-			/*if(this.root.getReference()==null){
-				if(root.compareAndSet(null, newNode, 0, 1))
-					return;
-			}*/
-			ret=search(newNode);
 
-			//if(((LockFreeNode<T>)ret.l.getReference()).compareTo(newNode)==0)
+		while(true){
+			ret=search(newNode);
 			if(newNode.compareTo(ret.l)==0)
 				return;
-
 			if(!ret.si.isClean()){
-				Help(ret.si/*, ret.stamps*/);
+				Help(ret.si);
 			}else{
 				T key=(newNode.compareTo(ret.l)<0)?ret.l.value:newNode.value;
 				LockFreeNode<T> nl=new LockFreeNode<T>(ret.l.value);//new internal
@@ -48,29 +38,21 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 				ni.left.set((newNode.compareTo(nl)<0)?newNode:nl, 0);
 				ni.right.set((newNode.compareTo(nl)<0)?nl:newNode,0);
 				boolean ris;
-				// This is the case where there is only one element in the tree. So root points to the found leaf.
-				//ris=root.compareAndSet(ret.l.getReference(), ni, ret.stamps.rootStamp, ret.stamps.rootStamp+1);
-				//if(!ris){
-					IInfo<T> op= new IInfo<T>(ni,ret.p,ret.l,ret.stamps);
-					StateInfo<T> newStateInfo = new StateInfo<T>(StateInfo.IFlag,op);
-					ris=ret.p.si.compareAndSet(ret.si, newStateInfo, op.stamps.siStamp, ++op.stamps.siStamp);
-					if(ris){
-						System.out.println("Aggiungo "+t+" con"+op.newInternal.value);
-						HelpInsert(op/*,ret.stamps*/);
-						return;
-					}else{
-						Help(ret.p.si.getReference()/*, ret.stamps*/);
-					}
-				//}else{
-				//	return;
-				//}
-				
 
+				IInfo<T> op= new IInfo<T>(ni,ret.p,ret.l,ret.stamps);
+				StateInfo<T> newStateInfo = new StateInfo<T>(StateInfo.IFlag,op);
+				ris=ret.p.si.compareAndSet(ret.si, newStateInfo, op.stamps.siStamp, ++op.stamps.siStamp);
+				if(ris){
+					HelpInsert(op);
+					return;
+				}else{
+					Help(ret.p.si.getReference());
+				}
 			}
 		}	
 	}
 
-	private void HelpInsert(IInfo<T> op/*, Stamps stamps*/){
+	private void HelpInsert(IInfo<T> op){
 		if(op==null || !(op instanceof IInfo) )
 			return;
 		CAS_CHILD(op.p, op.l, op.newInternal,op.stamps.pLeftStamp,op.stamps.pRightStamp);
@@ -85,31 +67,23 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 		if(p.isLeaf() || ni==null)
 			return;
 		boolean ris;
-		
+
 		if(ni.compareTo(p)<0)
 			ris=p.left.compareAndSet(l, ni, pLeftStamp, ++pLeftStamp);
 		else
 			ris=p.right.compareAndSet(l, ni, pRightStamp, ++pRightStamp);
-		if(!ris){
-			System.out.println("Errore");
-		}else{
-			System.out.println("Eliminato"+toString());
-		}
-		
-		//root.compareAndSet(l.getReference(), p.getReference(), rootStamp, ++rootStamp);
 	}
 
-	private boolean HelpDelete(DInfo<T> op/*, Stamps stamps*/){
+	private boolean HelpDelete(DInfo<T> op){
 		if(op==null || !(op instanceof DInfo))
 			return false;
 		boolean res = op.p.si.compareAndSet(op.si, new StateInfo<T>(StateInfo.MARKED,op), op.stamps.siStamp, ++op.stamps.siStamp);
 		StateInfo<T> app2 = op.p.si.getReference();
 		if(res || (app2.isMarked() && app2.info == op)){
-			HelpMarked(op/*, stamps*/);
+			HelpMarked(op);
 			return true;
 		}else{
-			Help(op.p.si.getReference()/*, stamps*/);
-			//THIS IS A FUCKING TRICK BUT I'VE NO IDEA HOW TO MADE IT IN ANOTHER WAY...
+			Help(op.p.si.getReference());
 			StateInfo<T> app = op.gp.si.getReference();
 			if(app.isDFlag() && app.info == op){
 				op.gp.si.compareAndSet(app, new StateInfo<T>(StateInfo.CLEAN,op), op.stamps.gsiStamp, ++op.stamps.gsiStamp);
@@ -118,7 +92,7 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 		}	
 	}
 
-	private void HelpMarked(DInfo<T> op/*, Stamps stamps*/){
+	private void HelpMarked(DInfo<T> op){
 		if(op==null || !(op instanceof DInfo))
 			return ;
 		LockFreeNode<T> other;
@@ -126,50 +100,32 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 			other=op.p.left.getReference();
 		else
 			other=op.p.right.getReference();
-		//if(other.getReference()==null)
-		//	return false;
-		//This is necessary in case there is no gp, so the root as to be updated manually.
-		//boolean res=root.compareAndSet(op.p.getReference(), other.getReference(), stamps.rootStamp, stamps.rootStamp+1);
-		//if(!res){
-			CAS_CHILD(op.gp, op.p, other, op.stamps.gpLeftStamp,op.stamps.gpRightStamp);
 
-			StateInfo<T> app = op.gp.si.getReference();
-			if(app.isDFlag() && app.info == op){
-				op.gp.si.compareAndSet(app, new StateInfo<T>(StateInfo.CLEAN,op), op.stamps.gsiStamp, ++op.stamps.gsiStamp);
-			}
-		//}
-		//return true;
+		CAS_CHILD(op.gp, op.p, other, op.stamps.gpLeftStamp,op.stamps.gpRightStamp);
+
+		StateInfo<T> app = op.gp.si.getReference();
+		if(app.isDFlag() && app.info == op){
+			op.gp.si.compareAndSet(app, new StateInfo<T>(StateInfo.CLEAN,op), op.stamps.gsiStamp, ++op.stamps.gsiStamp);
+		}
 	}
 
 
-	private void Help(StateInfo<T> u/*, Stamps stamps*/){
-		System.out.println("AIUTOOOO"+u+" -- "+u.state);
-		//System.out.println(toString());
-		
-	
+	@SuppressWarnings("unchecked")
+	private void Help(StateInfo<T> u){
 		if(u==null)
 			return;
 		switch(u.state){
 		case StateInfo.IFlag:
-			System.out.println("AIUTOOOO insert"+((IInfo<T>)u.info).newInternal.value);
-			if(u.info instanceof  IInfo){
-				System.out.println("AIUTOOOO insert 2");
-				HelpInsert((IInfo<T>) u.info/*, stamps*/);
-			}
-			//HelpInsert(null, stamps);
+			if(u.info instanceof  IInfo)
+				HelpInsert((IInfo<T>) u.info);
 			break;
 		case StateInfo.MARKED:
-			System.out.println("AIUTOOOO marked");
-			if(u.info instanceof  DInfo){
-				System.out.println("AIUTOOOO marked 2");
-				HelpMarked((DInfo<T>)u.info/*, stamps*/);
-			}
+			if(u.info instanceof  DInfo)
+				HelpMarked((DInfo<T>)u.info);
 			break;
 		case StateInfo.DFlag:
-			System.out.println("AIUTOOOO remove");
 			if(u.info instanceof  DInfo){
-				System.out.println("AIUTOOOO remove 2"+((DInfo<T>)u.info).l.value);
-				HelpDelete((DInfo<T>)u.info/*, stamps*/);
+				HelpDelete((DInfo<T>)u.info);
 			}
 			break;
 		}
@@ -190,8 +146,8 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 			this.gp=gp.getReference();
 			this.p=p.getReference();
 			this.l=l.getReference();
-			this.si=si.getReference();//(p==null)?null:p.getReference().si;
-			this.gsi=gsi.getReference();//(gp==null)?null:gp.getReference().si;
+			this.si=si.getReference();
+			this.gsi=gsi.getReference();
 			this.stamps=new Stamps(si.getStamp(), gsi.getStamp(), p.getStamp(), gp.getStamp(), p.getReference().left.getStamp(),
 					p.getReference().right.getStamp(), gp.getReference().left.getStamp(), gp.getReference().right.getStamp());
 		}
@@ -204,9 +160,8 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 		AtomicStampedReference<LockFreeNode<T>> l=new AtomicStampedReference<LockFreeNode<T>>(new LockFreeNode<T>(),0);
 		AtomicStampedReference<StateInfo<T>> gsi=new AtomicStampedReference<StateInfo<T>>(new StateInfo<T>(StateInfo.CLEAN,null),0);
 		AtomicStampedReference<StateInfo<T>> si=new AtomicStampedReference<StateInfo<T>>(new StateInfo<T>(StateInfo.CLEAN,null),0);
-
+		
 		l=this.root;
-
 		while(!l.getReference().isLeaf()){
 			gp=p;
 			p=l;
@@ -223,53 +178,28 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 		SearchReturnValues ret;
 		LockFreeNode<T> newNode=new LockFreeNode<T>(t);//node to find
 
-		if(Sorted.DEBUG){
-			System.out.println(this.toString());
-			System.out.println("Remove element"+t);
-		}
-
 		while(true){
-			/*if(this.root.getReference()==null){
-				return;
-			}*/
-			System.out.println("Remove element"+t);
 			ret=search(newNode);
-			System.out.println("finded element"+ret.l.value);
 			if(newNode.compareTo(ret.l)!=0){
-				System.out.println("Fail!"+t);
 				return;
 			}
-           
 			if(!ret.gsi.isClean())
-				Help(ret.gsi/*, ret.stamps*/);
+				Help(ret.gsi);
 			else if(!ret.si.isClean())
-				Help(ret.si/*, ret.stamps*/);
+				Help(ret.si);
 			else{
 				boolean res;
-				//boolean res=root.compareAndSet(ret.l.getReference(), null, ret.stamps.rootStamp, ret.stamps.rootStamp+1);
-				//if(!res){
-					op= new DInfo<T>(ret.gp,ret.p,ret.l,ret.si,ret.stamps);
-					/*if(root.getReference()==ret.p.getReference()){
-						if(HelpDelete(info,ret.stamps))
-							return;
-					}else{*/
-					StateInfo<T> newStateInfo = new StateInfo<T>(StateInfo.DFlag,op);
-					System.out.println("Remove element"+ret.gp.si.getReference().state);
-					res=ret.gp.si.compareAndSet(ret.gsi, newStateInfo , op.stamps.gsiStamp, ++op.stamps.gsiStamp);
-					if(res){
-						if(HelpDelete(op/*,ret.stamps*/))
-							return;
-					}else{
-						Help(ret.gp.si.getReference()/*,ret.stamps*/);						
-					}
-				//}else{
-				//	return;
-				//}
+				op= new DInfo<T>(ret.gp,ret.p,ret.l,ret.si,ret.stamps);
+				StateInfo<T> newStateInfo = new StateInfo<T>(StateInfo.DFlag,op);
+				res=ret.gp.si.compareAndSet(ret.gsi, newStateInfo , op.stamps.gsiStamp, ++op.stamps.gsiStamp);
+				if(res){
+					if(HelpDelete(op))
+						return;
+				}else{
+					Help(ret.gp.si.getReference());						
+				}
 			}
-
-
 		}
-		
 	}
 
 	@Override
@@ -278,23 +208,12 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 		AtomicStampedReference<LockFreeNode<T>> node=this.root;
 		String str=recursivePrint(node);
 		return (str.compareTo("")==0)?"[]":str;
-		//if(node ==null || node.getReference()==null)
-		//	return "[]";
-		//node= findFirst(node);
-		//if(node ==null || node.getReference()==null)
-		//	return "[]";
-		//return "["+node.getReference().getValue()+recursivePrint(node.getReference().left)+recursivePrint(node.getReference().right)+"]";
-		//return "["+node.getReference().getValue()+recursivePrint(node.getReference().left)+recursivePrint(node.getReference().right)+"]";
-	    
+
 	}
-	
+
 	private String recursivePrint(AtomicStampedReference<LockFreeNode<T>> node){
 		if(node == null || node.getReference()==null )
 			return "";
-		//if(node.getReference().isDummy())
-		//	return recursivePrint(node.getReference().left)+recursivePrint(node.getReference().right);
-		//if(node.getReference().isLeaf())
-		//	return "["+node.getReference().value+"]";
 		if(node.getReference().getValue()==null)
 			return recursivePrint(node.getReference().left)+recursivePrint(node.getReference().right);
 		return "["+node.getReference().getValue()+recursivePrint(node.getReference().left)+recursivePrint(node.getReference().right)+"]";
