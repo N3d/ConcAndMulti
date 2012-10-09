@@ -25,6 +25,11 @@ public class Node<T extends Comparable<T>> implements Comparable<Node<T>> {
 	public Node(T value) {
 		this.value = value;
 	}
+	
+	public Node(T value, Node<T> parent) {
+		this.value = value;
+		this.parent = parent;
+	}
 
 	public Node(T value, Node<T> left, Node<T> right) {
 		this.value = value;

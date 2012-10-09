@@ -1,7 +1,5 @@
 package data_structures.implementation;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,72 +11,59 @@ import data_structures.Sorted;
  * @param <T>
  */
 public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
-	private Node<T> root;
-	private final Lock lock;
+	private FineNode<T> root;
 	private static final Logger logger = Logger
 			.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
 	public FineGrainedTree() {
-		root = null;
-		lock = new ReentrantLock();
+		root = new FineNode<T>();
 	}
 
 	@Override
 	public void add(T t) {
-		lock.lock();
-		try {
-			if (logger.isLoggable(Level.FINE)) {
-				logger.fine("Current tree: " + sequentialToString());
-				logger.fine("Adding " + t.toString());
-			}
+		if (logger.isLoggable(Level.FINE)) {
+			logger.fine("Current tree: " + sequentialToString());
+			logger.fine("Adding " + t.toString());
+		}
 
-			Node<T> _new = new Node<T>(t);
-			if (root == null) {
-				root = _new;
+		root.lock();
+		try {
+			if (root.value == null) {
+				root.value = t;
 			} else {
-				sequentialAdd(root, _new);
+				fineAdd(root, t);
 			}
 		} finally {
-			lock.unlock();
+			root.unlock();
 		}
 	}
 
 	@Override
 	public void remove(T t) {
-		lock.lock();
-		try {
-			if (logger.isLoggable(Level.FINE)) {
-				logger.fine("Current tree: " + sequentialToString());
-				logger.fine("Removing " + t.toString());
-			}
-
-			sequentialRemove(root, t);
-		} finally {
-			lock.unlock();
+		if (logger.isLoggable(Level.FINE)) {
+			logger.fine("Current tree: " + sequentialToString());
+			logger.fine("Removing " + t.toString());
 		}
+
+		fineRemove(root, t);
 	}
 
 	@Override
 	public String toString() {
 		PreorderToStringOperation toString = new PreorderToStringOperation();
-		lock.lock();
-		try {
-			sequentialTraverse(root, toString);
-		} finally {
-			lock.unlock();
-		}
+		sequentialTraverse(root, toString);
 		return toString.toString();
 	}
 
 	// sequential methods
-	private void sequentialRemove(Node<T> curr, T t) {
+	private void fineRemove(FineNode<T> curr, T t) {
 		if (curr == null) {
 			return;
 		}
 		switch (t.compareTo(curr.value)) {
 		case 0:
 			if (curr.left != null && curr.right != null) {
-				Node<T> successor = findMinChild(curr.right);
+				FineNode<T> successor = findMinChild(curr.right);
 				curr.value = successor.value;
 				replaceNodeInParent(successor, successor.right);
 			} else if (curr.left != null) {
@@ -90,15 +75,15 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 			}
 			break;
 		case -1:
-			sequentialRemove(curr.left, t);
+			fineRemove(curr.left, t);
 			break;
 		case 1:
-			sequentialRemove(curr.right, t);
+			fineRemove(curr.right, t);
 			break;
 		}
 	}
 
-	private void replaceNodeInParent(Node<T> curr, Node<T> _new) {
+	private void replaceNodeInParent(FineNode<T> curr, FineNode<T> _new) {
 		if (curr.parent != null) {
 			if (curr == curr.parent.left) {
 				curr.parent.left = _new;
@@ -113,42 +98,57 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 		}
 	}
 
-	private Node<T> findMinChild(Node<T> curr) {
-		while (curr.left != null) {
-			curr = curr.left;
+	private FineNode<T> findMinChild(FineNode<T> right) {
+		while (right.left != null) {
+			right = right.left;
 		}
-		return curr;
+		return right;
 	}
 
-	private void sequentialAdd(Node<T> curr, Node<T> _new) {
-		switch (_new.value.compareTo(curr.value)) {
-		case -1:
-			logger.finer("curr.left = " + curr.left);
-			sequentialInternalAdd(curr.left, _new);
-			break;
-		case 1:
-			logger.finer("curr.right = " + curr.right);
-			sequentialInternalAdd(curr.right, _new);
-			break;
-		case 0:
-			sequentialInternalAdd(curr.left, _new);
-			break;
-		default:
-			throw new UnsupportedOperationException();
+	private void fineAdd(FineNode<T> curr, T t) {
+		if (curr != root) {
+			curr.lock();
+		}
+		try {
+			switch (t.compareTo(curr.value)) {
+			case -1:
+				logger.finer("curr.left = " + curr.left);
+				fineInternalAddLeft(curr, t);
+				break;
+			case 1:
+				logger.finer("curr.right = " + curr.right);
+				fineInternalAddRight(curr, t);
+				break;
+			case 0:
+				logger.finer("curr.left = " + curr.left);
+				fineInternalAddLeft(curr, t);
+				break;
+			}
+		} finally {
+			if (curr != root) {
+				curr.unlock();
+			}
 		}
 	}
 
-	private void sequentialInternalAdd(Node<T> curr, Node<T> _new) {
-		if (curr == null) {
-			curr = _new;
-			_new.parent = curr.parent;
+	private void fineInternalAddRight(FineNode<T> curr, T t) {
+		if (curr.right == null) {
+			curr.right = new FineNode<T>(t, curr);
 		} else {
-			sequentialAdd(curr, _new);
+			fineAdd(curr.right, t);
 		}
 	}
 
-	private void sequentialTraverse(Node<T> curr, Operation<T> operation) {
-		if (curr == null) {
+	private void fineInternalAddLeft(FineNode<T> curr, T t) {
+		if (curr.left == null) {
+			curr.left = new FineNode<T>(t, curr);
+		} else {
+			fineAdd(curr.left, t);
+		}
+	}
+
+	private void sequentialTraverse(FineNode<T> curr, Operation<T> operation) {
+		if (curr == null || curr.value == null) {
 			return;
 		}
 		operation.start(curr);
@@ -159,11 +159,11 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 	}
 
 	private interface Operation<T extends Comparable<T>> {
-		public void start(Node<T> node);
+		public void start(FineNode<T> node);
 
-		public void middle(Node<T> node);
+		public void middle(FineNode<T> node);
 
-		public void end(Node<T> node);
+		public void end(FineNode<T> node);
 	}
 
 	private class PreorderToStringOperation implements Operation<T> {
@@ -179,17 +179,17 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 		}
 
 		@Override
-		public void middle(Node<T> node) {
+		public void middle(FineNode<T> node) {
 			// nothing
 		}
 
 		@Override
-		public void start(Node<T> node) {
+		public void start(FineNode<T> node) {
 			stringBuilder.append('[' + node.value.toString());
 		}
 
 		@Override
-		public void end(Node<T> node) {
+		public void end(FineNode<T> node) {
 			stringBuilder.append(']');
 		}
 	}
