@@ -4,7 +4,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class FineElement<T extends Comparable<T>> extends Element<T>{
 	
-	private ReentrantLock lock;
+	private final ReentrantLock lock;
 
 	public FineElement() {
 		super();
@@ -20,11 +20,9 @@ public class FineElement<T extends Comparable<T>> extends Element<T>{
 		this.lock.lock();
 	}
 	
-	public void unlock(){
-		try{
+	public void unlock(){	
+		if(this.lock.isHeldByCurrentThread())
 			this.lock.unlock();
-		}catch(IllegalMonitorStateException e){
-		}
 	}
 
 }
