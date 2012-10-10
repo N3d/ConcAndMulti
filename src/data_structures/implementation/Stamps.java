@@ -13,7 +13,6 @@ public class Stamps{
 	public int pRightStamp;
 	public int gpLeftStamp;
 	public int gpRightStamp;
-	//public int rootStamp;
 
 	public Stamps(int siStamp, int gsiStamp, int pStamp,
 			int gpStamp,int pLeftStamp,int pRightStamp,int gpLeftStamp,int gpRightStamp){
@@ -25,7 +24,6 @@ public class Stamps{
 		this.pRightStamp=pRightStamp;
 		this.gpLeftStamp=gpLeftStamp;
 		this.gpRightStamp=gpRightStamp;
-		//this.rootStamp=root.getStamp();
 	}
 }
 

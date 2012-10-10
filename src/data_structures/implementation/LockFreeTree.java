@@ -168,7 +168,7 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 		int[] app=new int[1];
 		l=this.root.get(app);
 		lHolder=app[0];
-		try{
+		//try{
 			while(!l.isLeaf()){
 				gp=p;
 				gpHolder=pHolder;
@@ -181,13 +181,13 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 				l=((node.compareTo(l)<0)?l.left.get(app):l.right.get(app));
 				lHolder=app[0];
 			}
-		}catch(NullPointerException e){
+		/*}catch(NullPointerException e){
 			//In case something change during the search we try it again.
 			System.out.println(toString());
 			System.out.println("gp"+gp.value+" p"+p.value+" l"+l.value);
 			e.printStackTrace();
 			return search(node);
-		}
+		}*/
 		Stamps stmp = new Stamps(siHolder, gsiHolder, pHolder, gpHolder, p.left.getStamp(),
 				p.right.getStamp(), gp.left.getStamp(), gp.right.getStamp());
 		return new SearchReturnValues(gp, p, l, si, gsi,stmp);
