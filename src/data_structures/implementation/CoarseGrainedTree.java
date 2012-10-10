@@ -28,10 +28,6 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 
 		Node<T> newNode = new Node<T>(t);
 		lock.lock();
-		if (Sorted.DEBUG) {
-			System.out.println(this.toString());
-			System.out.println("New element" + t);
-		}
 		try {
 			if (t == null)
 				return;
@@ -88,10 +84,6 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 	public void remove(T t) {
 		Node<T> node = new Node<T>(t);
 		lock.lock();
-		if (Sorted.DEBUG) {
-			System.out.println(this.toString());
-			System.out.println("Remove element" + t);
-		}
 		try {
 
 			if (root == null)
@@ -112,11 +104,9 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 					root = substitute;
 					// return true;
 				}
-			} else if (!recoursiveRemove(root, root, node)) {
-				if (Sorted.DEBUG)
-					System.out
-							.println("I haven't find anything.. O.o Not Correct!");
-			}
+			} else 
+				recoursiveRemove(root, root, node);
+			
 		} finally {
 			lock.unlock();
 		}
@@ -125,8 +115,6 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 	private boolean recoursiveRemove(Node<T> parent, Node<T> index,
 			Node<T> newNode) {
 		if (parent == null || index == null || newNode == null) {
-			if (Sorted.DEBUG)
-				System.out.println("Fail!");
 			return false;
 		}
 		// System.out.println("Current:"+index.value+" rem:"+newNode.value);
@@ -144,8 +132,6 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 					parent.setRight(index.getLeft());
 			} else {
 				// search for the first left leaf on its right subtree
-				if (Sorted.DEBUG)
-					System.out.println("Substitude.. Nodenow:" + index.value);
 				Node<T> substitute = substituteLookUp(index, index.getRight());
 				// the substitute node takes its place.
 				substitute.setLeft(index.getLeft());
@@ -177,28 +163,19 @@ public class CoarseGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 
 	private Node<T> substituteLookUp(Node<T> parent, Node<T> node) {
 		if (parent == null || node == null) {
-			if (Sorted.DEBUG)
-				System.out.println("Fail222!");
 			return null;
 		}
 		if (node.isLeaf()) {
-			if (Sorted.DEBUG)
-				System.out.printf("is leaf");
 			if (node.equals(parent.getLeft()))
 				parent.setLeft(null);
 			else
 				parent.setRight(null);
 			return node;
 		} else if (node.getLeft() == null) {
-			if (Sorted.DEBUG)
-				System.out.printf("not leaf leaf");
 			if (node.equals(parent.getLeft()))
 				parent.setLeft(node.getRight());
 			else
 				parent.setRight(node.getRight());
-			if (Sorted.DEBUG)
-				System.out.println("Parent:" + parent.value + " Node:"
-						+ node.value + " node.right:" + node.getRight());
 			return node;
 		} else {
 			return substituteLookUp(node, node.getLeft());

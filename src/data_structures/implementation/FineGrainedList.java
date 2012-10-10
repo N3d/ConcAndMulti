@@ -5,8 +5,8 @@ import data_structures.Sorted;
 public class FineGrainedList<T extends Comparable<T>> implements Sorted<T> {
 	
 
-	private FineElement<T> head;
-	private FineElement<T> tail;
+	private final FineElement<T> head;
+	private final FineElement<T> tail;
 
 	public FineGrainedList(){
 		this.head=new FineElement<T>();
@@ -16,13 +16,9 @@ public class FineGrainedList<T extends Comparable<T>> implements Sorted<T> {
 		this.head.next=this.tail;
 	}
 
+	@Override
 	public void add(T t) {
 		FineElement<T> newEle = new FineElement<T>(t);
-
-		if(Sorted.DEBUG){
-			System.out.println(this.toString());
-			System.out.println("New element"+t);
-		}
 
 		if(t == null)
 			return;
@@ -51,13 +47,9 @@ public class FineGrainedList<T extends Comparable<T>> implements Sorted<T> {
 		}
 	}
 
+	@Override
 	public void remove(T t) {
 		FineElement<T> newEle = new FineElement<T>(t);
-
-		if(Sorted.DEBUG){
-			System.out.println(this.toString());
-			System.out.println("Remove element"+t);
-		}
 
 		if(t == null)
 			return;
@@ -87,6 +79,7 @@ public class FineGrainedList<T extends Comparable<T>> implements Sorted<T> {
 		}
 	}
 
+	@Override
 	public String toString() {
 		String ris="";
 		for(FineElement<T> curr=(FineElement<T>) this.head.next;!curr.isTail();curr=(FineElement<T>) curr.next){
