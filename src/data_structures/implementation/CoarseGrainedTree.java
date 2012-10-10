@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import data_structures.Sorted;
 
 /**
- * @author Matteo Casenove and Nicola Mularoni
+ * @author Matteo Casenove and Carmine Paolino
  * 
  *         This class represents the structure Coarse Grained Tree.
  * 
