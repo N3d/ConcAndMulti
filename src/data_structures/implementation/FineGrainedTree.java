@@ -1,8 +1,5 @@
 package data_structures.implementation;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import data_structures.Sorted;
 
 /**
@@ -12,8 +9,6 @@ import data_structures.Sorted;
  */
 public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 	private FineNode<T> root;
-	private static final Logger logger = Logger
-			.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
 	public FineGrainedTree() {
 		root = new FineNode<T>();
@@ -21,11 +16,6 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 
 	@Override
 	public void add(T t) {
-		if (logger.isLoggable(Level.FINE)) {
-			logger.fine("Current tree: " + sequentialToString());
-			logger.fine("Adding " + t.toString());
-		}
-
 		root.lock();
 		try {
 			if (root.getValue() == null) {
@@ -42,11 +32,6 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 
 	@Override
 	public void remove(T t) {
-		if (logger.isLoggable(Level.FINE)) {
-			logger.fine("Current tree: " + sequentialToString());
-			logger.fine("Removing " + t.toString());
-		}
-
 		fineRemove(root, t);
 	}
 
@@ -125,7 +110,11 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 				curr.getParent().setRight(_new);
 			}
 		} else {
-			root = _new;
+			if (_new == null) {
+				root.setValue(null);
+			} else {
+				root = _new;
+			}
 		}
 		if (_new != null) {
 			_new.setParent(curr.getParent());
@@ -158,15 +147,12 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 		try {
 			switch (t.compareTo(curr.getValue())) {
 			case -1:
-				logger.finer("curr.left = " + curr.getLeft());
 				fineInternalAddLeft(curr, t);
 				break;
 			case 1:
-				logger.finer("curr.right = " + curr.getRight());
 				fineInternalAddRight(curr, t);
 				break;
 			case 0:
-				logger.finer("curr.left = " + curr.getLeft());
 				fineInternalAddLeft(curr, t);
 				break;
 			}
@@ -194,6 +180,10 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 	}
 
 	private void sequentialTraverse(FineNode<T> curr, Operation<T> operation) {
+		if (curr != null && curr == root && curr.getLeft() == null && curr.getRight() == null) {
+			operation.empty(curr);
+			return;
+		}
 		if (curr == null || curr.getValue() == null) {
 			return;
 		}
@@ -206,6 +196,8 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 
 	private interface Operation<T extends Comparable<T>> {
 		public void start(FineNode<T> node);
+
+		public void empty(FineNode<T> curr);
 
 		public void middle(FineNode<T> node);
 
@@ -238,11 +230,10 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 		public void end(FineNode<T> node) {
 			stringBuilder.append(']');
 		}
-	}
 
-	private String sequentialToString() {
-		PreorderToStringOperation toString = new PreorderToStringOperation();
-		sequentialTraverse(root, toString);
-		return toString.toString();
+		@Override
+		public void empty(FineNode<T> curr) {
+			stringBuilder.append("[]");
+		}
 	}
 }
