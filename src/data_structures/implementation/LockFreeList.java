@@ -84,7 +84,7 @@ public class LockFreeList<T extends Comparable<T>> implements Sorted<T> {
 					curr = pred.getNext().getReference();
 					succ = curr.getNext().get(marked);
 				}
-				if ((!curr.isHead()) || curr.isTail() || curr.getValue().compareTo(value) >= 0) {
+				if ((!curr.isHead()) && (curr.isTail() || curr.getValue().compareTo(value) >= 0)) {
 					return new Window<T>(pred, curr);
 				}
 				pred = curr;
