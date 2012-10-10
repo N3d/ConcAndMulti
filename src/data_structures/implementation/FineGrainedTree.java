@@ -57,31 +57,63 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 		return toString.toString();
 	}
 
-	// sequential methods
 	private void fineRemove(FineNode<T> curr, T t) {
 		if (curr == null) {
 			return;
 		}
-		switch (t.compareTo(curr.getValue())) {
-		case 0:
-			if (curr.getLeft() != null && curr.getRight() != null) {
-				FineNode<T> successor = findMinChild(curr.getRight());
-				curr.setValue(successor.getValue());
-				replaceNodeInParent(successor, successor.getRight());
-			} else if (curr.getLeft() != null) {
-				replaceNodeInParent(curr, curr.getLeft());
-			} else if (curr.getRight() != null) {
-				replaceNodeInParent(curr, curr.getRight());
-			} else {
-				replaceNodeInParent(curr, null);
+		if (curr != root && curr.getParent() != root) {
+			curr.getParent().getParent().unlock();
+		}
+		curr.lock();
+		try {
+			switch (t.compareTo(curr.getValue())) {
+			case 0:
+				if (curr.getLeft() != null && curr.getRight() != null) {
+					FineNode<T> successor = findMinChild(curr.getRight());
+					curr.setValue(successor.getValue());
+
+					FineNode<T> _new = successor.getRight();
+					if (_new != null) {
+						_new.lock();
+					}
+					try {
+						replaceNodeInParent(successor, _new);
+					} finally {
+						if (_new != null && _new.getLock().isHeldByCurrentThread()) {
+							_new.unlock();
+						}
+					}
+				} else if (curr.getLeft() != null) {
+					FineNode<T> left = curr.getLeft();
+					left.lock();
+					try {
+						replaceNodeInParent(curr, left);
+					} finally {
+						left.unlock();
+					}
+				} else if (curr.getRight() != null) {
+					FineNode<T> right = curr.getRight();
+					right.lock();
+					try {
+						replaceNodeInParent(curr, right);
+					} finally {
+						right.unlock();
+					}
+				} else {
+					replaceNodeInParent(curr, null);
+				}
+				break;
+			case -1:
+				fineRemove(curr.getLeft(), t);
+				break;
+			case 1:
+				fineRemove(curr.getRight(), t);
+				break;
 			}
-			break;
-		case -1:
-			fineRemove(curr.getLeft(), t);
-			break;
-		case 1:
-			fineRemove(curr.getRight(), t);
-			break;
+		} finally {
+			if (curr.getLock().isHeldByCurrentThread()) {
+				curr.unlock();
+			}
 		}
 	}
 
@@ -98,19 +130,29 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 		if (_new != null) {
 			_new.setParent(curr.getParent());
 		}
+		if (curr.getLock().isHeldByCurrentThread()) {
+			curr.unlock();
+		}
 	}
 
 	private FineNode<T> findMinChild(FineNode<T> right) {
-		while (right.getLeft() != null) {
-			right = right.getLeft();
+		right.lock();
+		try {
+			if (right.getLeft() == null) {
+				return right;
+			} else {
+				return findMinChild(right.getLeft());
+			}
+		} finally {
+			right.unlock();
 		}
-		return right;
 	}
 
 	private void fineAdd(FineNode<T> curr, T t) {
 		if (curr != root) {
-			FineNode<T> parent = curr.getParent();
-			parent.unlock();
+			if (curr.getParent() != root) {
+				curr.getParent().getParent().unlock();
+			}
 			curr.lock();
 		}
 		try {
