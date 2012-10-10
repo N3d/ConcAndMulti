@@ -138,14 +138,14 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 		public StateInfo<T> gsi;
 		public Stamps stamps;
 
-		public SearchReturnValues(AtomicStampedReference<LockFreeNode<T>> gp,AtomicStampedReference<LockFreeNode<T>> p,
-				AtomicStampedReference<LockFreeNode<T>> l,
-				AtomicStampedReference<StateInfo<T>> si, AtomicStampedReference<StateInfo<T>> gsi,Stamps stmp){
-			this.gp=gp.getReference();
-			this.p=p.getReference();
-			this.l=l.getReference();
-			this.si=si.getReference();
-			this.gsi=gsi.getReference();
+		public SearchReturnValues(LockFreeNode<T> gp,LockFreeNode<T> p,
+				LockFreeNode<T> l,
+				StateInfo<T> si, StateInfo<T> gsi,Stamps stmp){
+			this.gp=gp;
+			this.p=p;
+			this.l=l;
+			this.si=si;
+			this.gsi=gsi;
 			this.stamps=stmp;/*new Stamps(si.getStamp(), gsi.getStamp(), p.getStamp(), gp.getStamp(), p.getReference().left.getStamp(),
 					p.getReference().right.getStamp(), gp.getReference().left.getStamp(), gp.getReference().right.getStamp());
 		*/
@@ -153,41 +153,43 @@ public class LockFreeTree<T extends Comparable<T>> implements Sorted<T> {
 	}
 
 	private SearchReturnValues search(LockFreeNode<T> node){
-
+		/*
 		AtomicStampedReference<LockFreeNode<T>> gp=new AtomicStampedReference<LockFreeNode<T>>(new LockFreeNode<T>(),0),
 				p=new AtomicStampedReference<LockFreeNode<T>>(new LockFreeNode<T>(),0);
 		AtomicStampedReference<LockFreeNode<T>> l;
 		AtomicStampedReference<StateInfo<T>> gsi=new AtomicStampedReference<StateInfo<T>>(new StateInfo<T>(StateInfo.CLEAN,null),0);
 		AtomicStampedReference<StateInfo<T>> si=new AtomicStampedReference<StateInfo<T>>(new StateInfo<T>(StateInfo.CLEAN,null),0);
-		
-		//LockFreeNode<T> gp=new LockFreeNode<T>(),p=new LockFreeNode<T>(),l;
-		//StateInfo<T> gsi=new StateInfo<T>(StateInfo.CLEAN,null),si=new StateInfo<T>(StateInfo.CLEAN,null);
+		*/
+		LockFreeNode<T> gp=new LockFreeNode<T>(),p=new LockFreeNode<T>(),l;
+		StateInfo<T> gsi=new StateInfo<T>(StateInfo.CLEAN,null),si=new StateInfo<T>(StateInfo.CLEAN,null);
 		//int[] gpHolder=new int[1],pHolder=new int[1],gsiHolder=new int[1],siHolder=new int[1],lHolder=new int[1];
 
 		int gpHolder=0,pHolder=0,gsiHolder=0,siHolder=0,lHolder=0;
-		l=this.root;
+		int[] app=new int[1];
+		l=this.root.get(app);
+		lHolder=app[0];
 		try{
-			while(!l.getReference().isLeaf()){
+			while(!l.isLeaf()){
 				gp=p;
-				gpHolder=p.getStamp();
+				gpHolder=pHolder;
 				p=l;
-				pHolder=l.getStamp();
+				pHolder=lHolder;
 				gsi=si;
-				gsiHolder=si.getStamp();
-				si=p.getReference().si;
-				siHolder=si.getStamp();
-				l=((node.compareTo(l.getReference())<0)?l.getReference().left:l.getReference().right);
-				lHolder=l.getStamp();
+				gsiHolder=siHolder;
+				si=p.si.get(app);
+				siHolder=app[0];
+				l=((node.compareTo(l)<0)?l.left.get(app):l.right.get(app));
+				lHolder=app[0];
 			}
 		}catch(NullPointerException e){
 			//In case something change during the search we try it again.
 			System.out.println(toString());
-			System.out.println("gp"+gp.getReference().value+" p"+p.getReference().value+" l"+l.getReference().value);
+			System.out.println("gp"+gp.value+" p"+p.value+" l"+l.value);
 			e.printStackTrace();
 			return search(node);
 		}
-		Stamps stmp = new Stamps(siHolder, gsiHolder, pHolder, gpHolder, p.getReference().left.getStamp(),
-				p.getReference().right.getStamp(), gp.getReference().left.getStamp(), gp.getReference().right.getStamp());
+		Stamps stmp = new Stamps(siHolder, gsiHolder, pHolder, gpHolder, p.left.getStamp(),
+				p.right.getStamp(), gp.left.getStamp(), gp.right.getStamp());
 		return new SearchReturnValues(gp, p, l, si, gsi,stmp);
 	}
 
