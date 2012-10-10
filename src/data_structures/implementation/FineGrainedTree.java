@@ -47,7 +47,9 @@ public class FineGrainedTree<T extends Comparable<T>> implements Sorted<T> {
 			return;
 		}
 		if (curr != root && curr.getParent() != root) {
-			curr.getParent().getParent().unlock();
+			if ((curr != root) && (curr.getParent() != null)) {
+				curr.getParent().getParent().unlock();
+			} 
 		}
 		curr.lock();
 		try {
