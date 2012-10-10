@@ -1,8 +1,38 @@
 #!/bin/bash
+sum=""
 
-res=$(./bin/test_data_structures $1 10 100 10)
-echo $res
-SFI=$IFS; IFS=:
-set -f
-val=($res)
-echo ${val[2]}
+rm perf.dat
+rm plot.gnu
+
+echo "#!/usr/bin/gnuplot" >> plot.gnu
+echo "set xlabel 'N. Threads'" >> plot.gnu
+echo "set ylabel 'time (ms)'" >> plot.gnu
+echo "set output 'plot.eps'" >> plot.gnu
+echo "set grid" >> plot.gnu
+echo "plot 'perf.dat' using 1:2 title 'cgt' with linespoints,\
+		'perf.dat' using 1:3 title 'lft' with linespoints" >> plot.gnu
+
+for thr in 1 2 5 10 20 50 100 200 500
+do
+	sum="$thr "
+	for str in cgt lft
+	do
+            med=0
+            for i in {1..10}
+            do
+	        res=$(./bin/test_data_structures $str $thr 5000 10)
+	        SFI=$IFS; IFS=:
+	        set -f
+	        val=($res)
+	        IFS=' '
+	        val=${val[2]}
+	        val2=($val)
+                let med=$med+${val2[0]}
+            done
+            let med=$med/10
+	    sum+=" $med "
+            
+    done
+    echo $sum >> perf.dat
+done
+#gnuplot -p plot.gnu
