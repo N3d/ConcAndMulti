@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 
 public class LockFreeNode<T extends Comparable<T>> extends Node<T> {
 	
-	public AtomicStampedReference<StateInfo<T>> si; //stamped to avoid aba.
+	public AtomicStampedReference<StateInfo<T>> si;
 	public int expectedStamp=0;
 	
     public AtomicStampedReference<LockFreeNode<T>> left;
